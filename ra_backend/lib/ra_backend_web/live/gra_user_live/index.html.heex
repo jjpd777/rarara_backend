@@ -1,0 +1,48 @@
+<.header>
+  Listing Users
+  <:actions>
+    <.link patch={~p"/users/new"}>
+      <.button>New Gra user</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.table
+  id="users"
+  rows={@streams.users}
+  row_click={fn {_id, gra_user} -> JS.navigate(~p"/users/#{gra_user}") end}
+>
+  <:col :let={{_id, gra_user}} label="Apple">{gra_user.apple_id}</:col>
+  <:col :let={{_id, gra_user}} label="Email">{gra_user.email}</:col>
+  <:col :let={{_id, gra_user}} label="First name">{gra_user.first_name}</:col>
+  <:col :let={{_id, gra_user}} label="Avatar url">{gra_user.avatar_url}</:col>
+  <:col :let={{_id, gra_user}} label="Is active">{gra_user.is_active}</:col>
+  <:col :let={{_id, gra_user}} label="Is verified">{gra_user.is_verified}</:col>
+  <:col :let={{_id, gra_user}} label="Last sign in at">{gra_user.last_sign_in_at}</:col>
+  <:col :let={{_id, gra_user}} label="Sign in count">{gra_user.sign_in_count}</:col>
+  <:action :let={{_id, gra_user}}>
+    <div class="sr-only">
+      <.link navigate={~p"/users/#{gra_user}"}>Show</.link>
+    </div>
+    <.link patch={~p"/users/#{gra_user}/edit"}>Edit</.link>
+  </:action>
+  <:action :let={{id, gra_user}}>
+    <.link
+      phx-click={JS.push("delete", value: %{id: gra_user.id}) |> hide("##{id}")}
+      data-confirm="Are you sure?"
+    >
+      Delete
+    </.link>
+  </:action>
+</.table>
+
+<.modal :if={@live_action in [:new, :edit]} id="gra_user-modal" show on_cancel={JS.patch(~p"/users")}>
+  <.live_component
+    module={RaBackendWeb.GraUserLive.FormComponent}
+    id={@gra_user.id || :new}
+    title={@page_title}
+    action={@live_action}
+    gra_user={@gra_user}
+    patch={~p"/users"}
+  />
+</.modal>

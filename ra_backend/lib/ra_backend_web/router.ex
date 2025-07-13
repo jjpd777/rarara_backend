@@ -18,6 +18,11 @@ defmodule RaBackendWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+
+    live "/users", GraUserLive.Index, :index
+    live "/users/new", GraUserLive.Index, :new
+    live "/users/:id/edit", GraUserLive.Index, :edit
+    live "/users/:id", GraUserLive.Show, :show
   end
 
   # Other scopes may use custom stacks.

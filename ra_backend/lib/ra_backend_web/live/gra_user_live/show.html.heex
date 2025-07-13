@@ -1,0 +1,34 @@
+<.header>
+  Gra user {@gra_user.id}
+  <:subtitle>This is a gra_user record from your database.</:subtitle>
+  <:actions>
+    <.link patch={~p"/users/#{@gra_user}/show/edit"} phx-click={JS.push_focus()}>
+      <.button>Edit gra_user</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.list>
+  <:item title="Apple">{@gra_user.apple_id}</:item>
+  <:item title="Email">{@gra_user.email}</:item>
+  <:item title="First name">{@gra_user.first_name}</:item>
+  <:item title="Avatar url">{@gra_user.avatar_url}</:item>
+  <:item title="Is active">{@gra_user.is_active}</:item>
+  <:item title="Is verified">{@gra_user.is_verified}</:item>
+  <:item title="Last sign in at">{@gra_user.last_sign_in_at}</:item>
+  <:item title="Sign in count">{@gra_user.sign_in_count}</:item>
+  <:item title="Metadata">{@gra_user.metadata}</:item>
+</.list>
+
+<.back navigate={~p"/users"}>Back to users</.back>
+
+<.modal :if={@live_action == :edit} id="gra_user-modal" show on_cancel={JS.patch(~p"/users/#{@gra_user}")}>
+  <.live_component
+    module={RaBackendWeb.GraUserLive.FormComponent}
+    id={@gra_user.id}
+    title={@page_title}
+    action={@live_action}
+    gra_user={@gra_user}
+    patch={~p"/users/#{@gra_user}"}
+  />
+</.modal>
