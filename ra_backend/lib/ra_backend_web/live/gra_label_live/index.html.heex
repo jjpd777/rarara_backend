@@ -1,0 +1,51 @@
+<.header>
+  Listing Labels
+  <:actions>
+    <.link patch={~p"/labels/new"}>
+      <.button>New Gra label</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.table
+  id="labels"
+  rows={@streams.labels}
+  row_click={fn {_id, gra_label} -> JS.navigate(~p"/labels/#{gra_label}") end}
+>
+  <:col :let={{_id, gra_label}} label="Name">{gra_label.name}</:col>
+  <:col :let={{_id, gra_label}} label="Description">{gra_label.description}</:col>
+  <:col :let={{_id, gra_label}} label="Category">{gra_label.category}</:col>
+  <:col :let={{_id, gra_label}} label="Subcategory">{gra_label.subcategory}</:col>
+  <:col :let={{_id, gra_label}} label="Color">{gra_label.color}</:col>
+  <:col :let={{_id, gra_label}} label="Icon">{gra_label.icon}</:col>
+  <:col :let={{_id, gra_label}} label="Priority">{gra_label.priority}</:col>
+  <:col :let={{_id, gra_label}} label="Is active">{gra_label.is_active}</:col>
+  <:col :let={{_id, gra_label}} label="Is public">{gra_label.is_public}</:col>
+  <:col :let={{_id, gra_label}} label="Soft delete">{gra_label.soft_delete}</:col>
+  <:col :let={{_id, gra_label}} label="Metadata">{Jason.encode!(gra_label.metadata)}</:col>
+  <:action :let={{_id, gra_label}}>
+    <div class="sr-only">
+      <.link navigate={~p"/labels/#{gra_label}"}>Show</.link>
+    </div>
+    <.link patch={~p"/labels/#{gra_label}/edit"}>Edit</.link>
+  </:action>
+  <:action :let={{id, gra_label}}>
+    <.link
+      phx-click={JS.push("delete", value: %{id: gra_label.id}) |> hide("##{id}")}
+      data-confirm="Are you sure?"
+    >
+      Delete
+    </.link>
+  </:action>
+</.table>
+
+<.modal :if={@live_action in [:new, :edit]} id="gra_label-modal" show on_cancel={JS.patch(~p"/labels")}>
+  <.live_component
+    module={RaBackendWeb.GraLabelLive.FormComponent}
+    id={@gra_label.id || :new}
+    title={@page_title}
+    action={@live_action}
+    gra_label={@gra_label}
+    patch={~p"/labels"}
+  />
+</.modal>

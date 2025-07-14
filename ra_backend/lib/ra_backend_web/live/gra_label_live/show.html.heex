@@ -1,0 +1,36 @@
+<.header>
+  Gra label {@gra_label.id}
+  <:subtitle>This is a gra_label record from your database.</:subtitle>
+  <:actions>
+    <.link patch={~p"/labels/#{@gra_label}/show/edit"} phx-click={JS.push_focus()}>
+      <.button>Edit gra_label</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.list>
+  <:item title="Name">{@gra_label.name}</:item>
+  <:item title="Description">{@gra_label.description}</:item>
+  <:item title="Category">{@gra_label.category}</:item>
+  <:item title="Subcategory">{@gra_label.subcategory}</:item>
+  <:item title="Color">{@gra_label.color}</:item>
+  <:item title="Icon">{@gra_label.icon}</:item>
+  <:item title="Priority">{@gra_label.priority}</:item>
+  <:item title="Is active">{@gra_label.is_active}</:item>
+  <:item title="Is public">{@gra_label.is_public}</:item>
+  <:item title="Soft delete">{@gra_label.soft_delete}</:item>
+  <:item title="Metadata">{@gra_label.metadata}</:item>
+</.list>
+
+<.back navigate={~p"/labels"}>Back to labels</.back>
+
+<.modal :if={@live_action == :edit} id="gra_label-modal" show on_cancel={JS.patch(~p"/labels/#{@gra_label}")}>
+  <.live_component
+    module={RaBackendWeb.GraLabelLive.FormComponent}
+    id={@gra_label.id}
+    title={@page_title}
+    action={@live_action}
+    gra_label={@gra_label}
+    patch={~p"/labels/#{@gra_label}"}
+  />
+</.modal>

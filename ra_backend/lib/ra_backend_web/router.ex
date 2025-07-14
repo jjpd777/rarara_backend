@@ -23,6 +23,12 @@ defmodule RaBackendWeb.Router do
     live "/users/new", GraUserLive.Index, :new
     live "/users/:id/edit", GraUserLive.Index, :edit
     live "/users/:id", GraUserLive.Show, :show
+
+    # Add these new routes for labels
+    live "/labels", GraLabelLive.Index, :index
+    live "/labels/new", GraLabelLive.Index, :new
+    live "/labels/:id/edit", GraLabelLive.Index, :edit
+    live "/labels/:id", GraLabelLive.Show, :show
   end
 
   # Other scopes may use custom stacks.
