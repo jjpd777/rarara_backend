@@ -31,6 +31,12 @@ defmodule RaBackendWeb.Router do
     live "/labels/:id", GraLabelLive.Show, :show
   end
 
+  scope "/api", RaBackendWeb do
+    pipe_through :api
+
+    get "/labels", LabelController, :index
+  end
+
   # Other scopes may use custom stacks.
   # scope "/api", RaBackendWeb do
   #   pipe_through :api

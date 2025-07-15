@@ -86,4 +86,16 @@ defmodule RaBackend.GraLabels do
   def change_gra_label(%GraLabel{} = gra_label, attrs \\ %{}) do
     GraLabel.changeset(gra_label, attrs)
   end
+
+  @doc """
+  Returns the list of active and public labels with associations.
+  """
+  def list_active_public_labels do
+    from(l in GraLabel,
+      where: l.is_active == true and l.is_public == true,
+      preload: [:created_by_user, :updated_by_user],
+      order_by: [asc: l.name]
+    )
+    |> Repo.all()
+  end
 end
