@@ -1,0 +1,111 @@
+# ========================================
+# CHARACTER SYSTEM - PHOENIX LIVEVIEW GENERATOR COMMANDS
+# ========================================
+# Fresh Start Commands for GraCharacter System with UUID Support
+# Run these commands in order for a complete setup
+
+# ========================================
+# STEP 1: MAIN CHARACTER TABLE
+# ========================================
+mix phx.gen.live GraCharacters GraCharacter gra_characters name:string biography:text system_prompt:text creation_prompt:text llm_model:string is_public:boolean soft_delete:boolean user_id:references:users
+
+# ========================================
+# STEP 2: CHARACTER HANDLES TABLE
+# ========================================
+mix phx.gen.live GraCharacterHandles GraCharacterHandle gra_character_handles handle_name:string is_primary:boolean is_active:boolean gra_character_id:references:gra_characters
+
+# ========================================
+# STEP 3: JOIN TABLE FOR LABELS (MANY-TO-MANY)
+# ========================================
+mix phx.gen.live GraCharacterLabels GraCharacterLabel gra_characters_gra_labels gra_character_id:references:gra_characters gra_label_id:references:labels
+
+# ========================================
+# POST-GENERATION TASKS (UUID-SPECIFIC)
+# ========================================
+# After running the above commands, you'll need to:
+
+# 1. Fix migrations to use binary_id (UUID):
+#    - Change create table(:table_name) to create table(:table_name, primary_key: false)
+#    - Add add :id, :binary_id, primary_key: true
+#    - Change all foreign key references to include type: :binary_id
+#    - Update on_delete policies (use :restrict instead of :nothing)
+
+# 2. Update schemas with UUID configuration:
+#    - Add @primary_key {:id, :binary_id, autogenerate: true}
+#    - Add @foreign_key_type :binary_id
+#    - Add belongs_to, has_many, many_to_many relationships
+
+# 3. Update contexts with relationship functions
+
+# 4. Modify LiveViews to handle relationships
+
+# 5. Update router with proper routes
+
+# 6. Run migrations:
+#    mix ecto.migrate
+
+# ========================================
+# MIGRATION FIXES (EXAMPLES)
+# ========================================
+# BEFORE (generated):
+# create table(:gra_characters) do
+#   add :name, :string
+#   add :user_id, references(:users, on_delete: :nothing)
+# end
+
+# AFTER (fixed for UUID):
+# create table(:gra_characters, primary_key: false) do
+#   add :id, :binary_id, primary_key: true
+#   add :name, :string
+#   add :user_id, references(:users, on_delete: :restrict, type: :binary_id)
+#   timestamps(type: :utc_datetime)
+# end
+
+# ========================================
+# SCHEMA FIXES (EXAMPLES)
+# ========================================
+# BEFORE (generated):
+# schema "gra_characters" do
+#   field :name, :string
+#   field :user_id, :id
+# end
+
+# AFTER (fixed for UUID):
+# @primary_key {:id, :binary_id, autogenerate: true}
+# @foreign_key_type :binary_id
+# schema "gra_characters" do
+#   field :name, :string
+#   belongs_to :user, RaBackend.GraUsers.GraUser
+#   timestamps(type: :utc_datetime)
+# end
+
+# ========================================
+# RELATIONSHIP STRUCTURE
+# ========================================
+# :user has_many :gra_characters
+# :gra_character belongs_to :user
+# :gra_character has_one :unique_handle
+# :gra_character many_to_many :labels (through join table)
+
+# ========================================
+# FIELD DESCRIPTIONS
+# ========================================
+# gra_characters:
+#   - name: Character name
+#   - biography: Character background story
+#   - system_prompt: AI behavior instructions
+#   - creation_prompt: Context for character creation
+#   - llm_model: AI model to use (e.g., "gpt-4", "claude-3")
+#   - is_public: Visibility control
+#   - soft_delete: Safe deletion flag
+#   - user_id: Owner reference (UUID)
+
+# gra_character_handles:
+#   - handle_name: Unique identifier/alias
+#   - is_primary: Main handle flag
+#   - is_active: Active status
+#   - gra_character_id: Character reference (UUID)
+
+# gra_characters_gra_labels:
+#   - gra_character_id: Character reference (UUID)
+#   - gra_label_id: Label reference (UUID) 
