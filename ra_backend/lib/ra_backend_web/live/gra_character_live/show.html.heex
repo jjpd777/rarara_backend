@@ -1,0 +1,32 @@
+<.header>
+  Gra character {@gra_character.id}
+  <:subtitle>This is a gra_character record from your database.</:subtitle>
+  <:actions>
+    <.link patch={~p"/gra_characters/#{@gra_character}/show/edit"} phx-click={JS.push_focus()}>
+      <.button>Edit gra_character</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.list>
+  <:item title="Name">{@gra_character.name}</:item>
+  <:item title="Biography">{@gra_character.biography}</:item>
+  <:item title="System prompt">{@gra_character.system_prompt}</:item>
+  <:item title="Creation prompt">{@gra_character.creation_prompt}</:item>
+  <:item title="Llm model">{@gra_character.llm_model}</:item>
+  <:item title="Is public">{@gra_character.is_public}</:item>
+  <:item title="Soft delete">{@gra_character.soft_delete}</:item>
+</.list>
+
+<.back navigate={~p"/gra_characters"}>Back to gra_characters</.back>
+
+<.modal :if={@live_action == :edit} id="gra_character-modal" show on_cancel={JS.patch(~p"/gra_characters/#{@gra_character}")}>
+  <.live_component
+    module={RaBackendWeb.GraCharacterLive.FormComponent}
+    id={@gra_character.id}
+    title={@page_title}
+    action={@live_action}
+    gra_character={@gra_character}
+    patch={~p"/gra_characters/#{@gra_character}"}
+  />
+</.modal>

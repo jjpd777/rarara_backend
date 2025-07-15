@@ -1,0 +1,28 @@
+<.header>
+  Gra character handle {@gra_character_handle.id}
+  <:subtitle>This is a gra_character_handle record from your database.</:subtitle>
+  <:actions>
+    <.link patch={~p"/gra_character_handles/#{@gra_character_handle}/show/edit"} phx-click={JS.push_focus()}>
+      <.button>Edit gra_character_handle</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.list>
+  <:item title="Handle name">{@gra_character_handle.handle_name}</:item>
+  <:item title="Is primary">{@gra_character_handle.is_primary}</:item>
+  <:item title="Is active">{@gra_character_handle.is_active}</:item>
+</.list>
+
+<.back navigate={~p"/gra_character_handles"}>Back to gra_character_handles</.back>
+
+<.modal :if={@live_action == :edit} id="gra_character_handle-modal" show on_cancel={JS.patch(~p"/gra_character_handles/#{@gra_character_handle}")}>
+  <.live_component
+    module={RaBackendWeb.GraCharacterHandleLive.FormComponent}
+    id={@gra_character_handle.id}
+    title={@page_title}
+    action={@live_action}
+    gra_character_handle={@gra_character_handle}
+    patch={~p"/gra_character_handles/#{@gra_character_handle}"}
+  />
+</.modal>

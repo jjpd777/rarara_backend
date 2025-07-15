@@ -1,0 +1,40 @@
+<.header>
+  Listing Gra characters gra labels
+  <:actions>
+    <.link patch={~p"/gra_characters_gra_labels/new"}>
+      <.button>New Gra character label</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.table
+  id="gra_characters_gra_labels"
+  rows={@streams.gra_characters_gra_labels}
+  row_click={fn {_id, gra_character_label} -> JS.navigate(~p"/gra_characters_gra_labels/#{gra_character_label}") end}
+>
+  <:action :let={{_id, gra_character_label}}>
+    <div class="sr-only">
+      <.link navigate={~p"/gra_characters_gra_labels/#{gra_character_label}"}>Show</.link>
+    </div>
+    <.link patch={~p"/gra_characters_gra_labels/#{gra_character_label}/edit"}>Edit</.link>
+  </:action>
+  <:action :let={{id, gra_character_label}}>
+    <.link
+      phx-click={JS.push("delete", value: %{id: gra_character_label.id}) |> hide("##{id}")}
+      data-confirm="Are you sure?"
+    >
+      Delete
+    </.link>
+  </:action>
+</.table>
+
+<.modal :if={@live_action in [:new, :edit]} id="gra_character_label-modal" show on_cancel={JS.patch(~p"/gra_characters_gra_labels")}>
+  <.live_component
+    module={RaBackendWeb.GraCharacterLabelLive.FormComponent}
+    id={@gra_character_label.id || :new}
+    title={@page_title}
+    action={@live_action}
+    gra_character_label={@gra_character_label}
+    patch={~p"/gra_characters_gra_labels"}
+  />
+</.modal>

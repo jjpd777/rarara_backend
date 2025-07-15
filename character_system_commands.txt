@@ -7,7 +7,7 @@
 # ========================================
 # STEP 1: MAIN CHARACTER TABLE
 # ========================================
-mix phx.gen.live GraCharacters GraCharacter gra_characters name:string biography:text system_prompt:text creation_prompt:text llm_model:string is_public:boolean soft_delete:boolean user_id:references:users
+mix phx.gen.live  GraCharacters GraCharacter gra_characters name:string biography:text system_prompt:text creation_prompt:text llm_model:string is_public:boolean soft_delete:boolean user_id:references:users
 
 # ========================================
 # STEP 2: CHARACTER HANDLES TABLE

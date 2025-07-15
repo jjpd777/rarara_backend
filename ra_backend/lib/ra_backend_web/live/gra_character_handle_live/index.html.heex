@@ -1,0 +1,43 @@
+<.header>
+  Listing Gra character handles
+  <:actions>
+    <.link patch={~p"/gra_character_handles/new"}>
+      <.button>New Gra character handle</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.table
+  id="gra_character_handles"
+  rows={@streams.gra_character_handles}
+  row_click={fn {_id, gra_character_handle} -> JS.navigate(~p"/gra_character_handles/#{gra_character_handle}") end}
+>
+  <:col :let={{_id, gra_character_handle}} label="Handle name">{gra_character_handle.handle_name}</:col>
+  <:col :let={{_id, gra_character_handle}} label="Is primary">{gra_character_handle.is_primary}</:col>
+  <:col :let={{_id, gra_character_handle}} label="Is active">{gra_character_handle.is_active}</:col>
+  <:action :let={{_id, gra_character_handle}}>
+    <div class="sr-only">
+      <.link navigate={~p"/gra_character_handles/#{gra_character_handle}"}>Show</.link>
+    </div>
+    <.link patch={~p"/gra_character_handles/#{gra_character_handle}/edit"}>Edit</.link>
+  </:action>
+  <:action :let={{id, gra_character_handle}}>
+    <.link
+      phx-click={JS.push("delete", value: %{id: gra_character_handle.id}) |> hide("##{id}")}
+      data-confirm="Are you sure?"
+    >
+      Delete
+    </.link>
+  </:action>
+</.table>
+
+<.modal :if={@live_action in [:new, :edit]} id="gra_character_handle-modal" show on_cancel={JS.patch(~p"/gra_character_handles")}>
+  <.live_component
+    module={RaBackendWeb.GraCharacterHandleLive.FormComponent}
+    id={@gra_character_handle.id || :new}
+    title={@page_title}
+    action={@live_action}
+    gra_character_handle={@gra_character_handle}
+    patch={~p"/gra_character_handles"}
+  />
+</.modal>

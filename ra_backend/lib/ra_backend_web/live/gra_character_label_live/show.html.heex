@@ -1,0 +1,25 @@
+<.header>
+  Gra character label {@gra_character_label.id}
+  <:subtitle>This is a gra_character_label record from your database.</:subtitle>
+  <:actions>
+    <.link patch={~p"/gra_characters_gra_labels/#{@gra_character_label}/show/edit"} phx-click={JS.push_focus()}>
+      <.button>Edit gra_character_label</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.list>
+</.list>
+
+<.back navigate={~p"/gra_characters_gra_labels"}>Back to gra_characters_gra_labels</.back>
+
+<.modal :if={@live_action == :edit} id="gra_character_label-modal" show on_cancel={JS.patch(~p"/gra_characters_gra_labels/#{@gra_character_label}")}>
+  <.live_component
+    module={RaBackendWeb.GraCharacterLabelLive.FormComponent}
+    id={@gra_character_label.id}
+    title={@page_title}
+    action={@live_action}
+    gra_character_label={@gra_character_label}
+    patch={~p"/gra_characters_gra_labels/#{@gra_character_label}"}
+  />
+</.modal>

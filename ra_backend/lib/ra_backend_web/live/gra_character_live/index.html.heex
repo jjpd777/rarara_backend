@@ -1,0 +1,47 @@
+<.header>
+  Listing Gra characters
+  <:actions>
+    <.link patch={~p"/gra_characters/new"}>
+      <.button>New Gra character</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.table
+  id="gra_characters"
+  rows={@streams.gra_characters}
+  row_click={fn {_id, gra_character} -> JS.navigate(~p"/gra_characters/#{gra_character}") end}
+>
+  <:col :let={{_id, gra_character}} label="Name">{gra_character.name}</:col>
+  <:col :let={{_id, gra_character}} label="Biography">{gra_character.biography}</:col>
+  <:col :let={{_id, gra_character}} label="System prompt">{gra_character.system_prompt}</:col>
+  <:col :let={{_id, gra_character}} label="Creation prompt">{gra_character.creation_prompt}</:col>
+  <:col :let={{_id, gra_character}} label="Llm model">{gra_character.llm_model}</:col>
+  <:col :let={{_id, gra_character}} label="Is public">{gra_character.is_public}</:col>
+  <:col :let={{_id, gra_character}} label="Soft delete">{gra_character.soft_delete}</:col>
+  <:action :let={{_id, gra_character}}>
+    <div class="sr-only">
+      <.link navigate={~p"/gra_characters/#{gra_character}"}>Show</.link>
+    </div>
+    <.link patch={~p"/gra_characters/#{gra_character}/edit"}>Edit</.link>
+  </:action>
+  <:action :let={{id, gra_character}}>
+    <.link
+      phx-click={JS.push("delete", value: %{id: gra_character.id}) |> hide("##{id}")}
+      data-confirm="Are you sure?"
+    >
+      Delete
+    </.link>
+  </:action>
+</.table>
+
+<.modal :if={@live_action in [:new, :edit]} id="gra_character-modal" show on_cancel={JS.patch(~p"/gra_characters")}>
+  <.live_component
+    module={RaBackendWeb.GraCharacterLive.FormComponent}
+    id={@gra_character.id || :new}
+    title={@page_title}
+    action={@live_action}
+    gra_character={@gra_character}
+    patch={~p"/gra_characters"}
+  />
+</.modal>
