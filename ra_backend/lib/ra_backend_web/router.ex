@@ -59,6 +59,9 @@ defmodule RaBackendWeb.Router do
     resources "/characters", CharacterController, only: [:index, :show, :create, :update, :delete]
     resources "/character-handles", CharacterHandleController, only: [:index, :show, :create, :update, :delete]
     resources "/users", UserController, only: [:index, :show, :create, :update, :delete]
+    post "/characters/empty", CharacterController, :create_empty
+    put "/characters/:id", CharacterController, :update_with_labels
+    get "/characters/:id", CharacterController, :show
   end
 
   # Other scopes may use custom stacks.

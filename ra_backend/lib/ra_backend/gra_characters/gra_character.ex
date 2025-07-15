@@ -28,7 +28,7 @@ defmodule RaBackend.GraCharacters.GraCharacter do
   def changeset(gra_character, attrs) do
     gra_character
     |> cast(attrs, [:name, :biography, :system_prompt, :creation_prompt, :llm_model, :is_public, :soft_delete, :metadata, :user_id])
-    |> validate_required([:name, :is_public, :soft_delete])
+    |> validate_required([:is_public, :soft_delete])
     |> put_default_user_id()
     |> validate_metadata()
     |> foreign_key_constraint(:user_id)

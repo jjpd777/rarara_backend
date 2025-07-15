@@ -122,4 +122,67 @@ defmodule RaBackend.GraCharacters do
     |> where(soft_delete: false)
     |> Repo.all()
   end
+
+  @doc """
+  Creates an empty character for a user to start building.
+  Returns a character with default values and a new ID.
+  """
+  def create_empty_character(user_uid) do
+    %GraCharacter{}
+    |> GraCharacter.changeset(%{
+      user_id: user_uid,
+      name: nil,
+      biography: nil,
+      system_prompt: nil,
+      creation_prompt: nil,
+      llm_model: nil,
+      is_public: false,
+      soft_delete: false,
+      metadata: %{}
+    })
+    |> Repo.insert()
+  end
+
+  @doc """
+  Updates a character with optional creation prompt and labels.
+  """
+  def update_character_with_labels(character_id, attrs) do
+    character = get_gra_character!(character_id)
+
+    # Extract label_ids from attrs
+    {label_ids, character_attrs} = Map.pop(attrs, :label_ids, [])
+
+    Repo.transaction(fn ->
+      # Update character
+      {:ok, updated_character} = update_gra_character(character, character_attrs)
+
+      # Handle labels if provided
+      if length(label_ids) > 0 do
+        # Clear existing labels
+        character
+        |> Ecto.Changeset.change()
+        |> Ecto.Changeset.put_assoc(:labels, [])
+        |> Repo.update!()
+
+        # Add new labels
+        labels = RaBackend.GraLabels.get_labels_by_ids(label_ids)
+        character
+        |> Ecto.Changeset.change()
+        |> Ecto.Changeset.put_assoc(:labels, labels)
+        |> Repo.update!()
+      end
+
+      updated_character
+    end)
+  end
+
+  @doc """
+  Gets a character with preloaded relationships.
+  """
+  def get_character_with_relationships(character_id) do
+    GraCharacter
+    |> where(id: ^character_id)
+    |> preload([:unique_handle, :labels, :user])
+    |> Repo.one()
+  end
 end
