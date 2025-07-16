@@ -9,12 +9,14 @@ defmodule RaBackendWeb.LLMController do
     }
 
     case RaBackend.LLM.ProviderRouter.route_request(request) do
-      {:ok, response} ->
-        json(conn, %{success: true, data: response})
+      {:ok, %{"content" => content}} ->  # If provider returns a map with string keys
+        json(conn, %{content: content})
+      {:ok, %{content: content}} ->       # If provider returns a map with atom keys
+        json(conn, %{content: content})
       {:error, reason} ->
         conn
         |> put_status(:bad_request)
-        |> json(%{success: false, error: reason})
+        |> json(%{error: reason})
     end
   end
 end
