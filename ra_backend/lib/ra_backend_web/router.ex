@@ -48,6 +48,8 @@ defmodule RaBackendWeb.Router do
     live "/character-labels/new", GraCharacterLabelLive.Index, :new
     live "/character-labels/:id/edit", GraCharacterLabelLive.Index, :edit
     live "/character-labels/:id", GraCharacterLabelLive.Show, :show
+
+
   end
 
   scope "/api", RaBackendWeb do
@@ -62,6 +64,7 @@ defmodule RaBackendWeb.Router do
     post "/characters/empty", CharacterController, :create_empty
     put "/characters/:id", CharacterController, :update_with_labels
     get "/characters/:id", CharacterController, :show
+    post "/llm/generate", LLMController, :generate
   end
 
   # Other scopes may use custom stacks.

@@ -58,7 +58,10 @@ defmodule RaBackend.MixProject do
       {:gettext, "~> 0.20"},
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.1.1"},
-      {:bandit, "~> 1.5"}
+      {:bandit, "~> 1.5"},
+      {:httpoison, "~> 2.0"},           # HTTP client for API calls
+      {:tesla, "~> 1.7"},               # Alternative HTTP client with middleware
+      {:nimble_pool, "~> 1.0"}         # Connection pooling for API calls
     ]
   end
 

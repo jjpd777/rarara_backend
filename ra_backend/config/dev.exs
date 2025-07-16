@@ -1,5 +1,17 @@
 import Config
 
+# Load environment variables from .env file
+if File.exists?(".env") do
+  File.stream!(".env")
+  |> Stream.map(&String.trim/1)
+  |> Stream.filter(&(&1 != "" && !String.starts_with?(&1, "#")))
+  |> Stream.map(fn line ->
+    [key, value] = String.split(line, "=", parts: 2)
+    {String.trim(key), String.trim(value)}
+  end)
+  |> Enum.each(fn {key, value} -> System.put_env(key, value) end)
+end
+
 # Configure your database
 config :ra_backend, RaBackend.Repo,
   username: "postgres",
