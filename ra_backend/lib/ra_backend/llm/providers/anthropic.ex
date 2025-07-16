@@ -21,14 +21,27 @@ defmodule RaBackend.LLM.Providers.Anthropic do
     case HTTPoison.post("#{config[:base_url]}/messages", body, headers) do
       {:ok, %HTTPoison.Response{status_code: 200, body: response_body}} ->
         case Jason.decode(response_body) do
-          {:ok, %{"content" => [%{"text" => content} | _]}} ->
+          {:ok, %{
+            "content" => [%{"text" => content} | _],
+            "usage" => usage,
+            "stop_reason" => stop_reason
+          } = decoded} ->
             {:ok, %{
               content: content,
               model: model,
               provider: :anthropic,
-              usage: %{},
-              finish_reason: "stop",
-              raw_response: response_body
+              usage: usage,
+              finish_reason: stop_reason,
+              raw_response: decoded
+            }}
+          {:ok, %{"content" => [%{"text" => content} | _]} = decoded} ->
+            {:ok, %{
+              content: content,
+              model: model,
+              provider: :anthropic,
+              usage: Map.get(decoded, "usage", %{}),
+              finish_reason: Map.get(decoded, "stop_reason", "stop"),
+              raw_response: decoded
             }}
           {:error, _} ->
             {:error, :invalid_response}
