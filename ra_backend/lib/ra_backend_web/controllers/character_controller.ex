@@ -63,6 +63,25 @@ defmodule RaBackendWeb.CharacterController do
     })
   end
 
+  def list_by_user(conn, %{"user_id" => user_id}) do
+    characters = GraCharacters.get_characters_by_user(user_id)
+    filtered = Enum.map(characters, fn character ->
+      %{
+        id: character.id,
+        name: character.name,
+        biography: character.biography,
+        systemPrompt: character.system_prompt,
+        creationPrompt: character.creation_prompt,
+        llmModel: character.llm_model,
+        isPublic: character.is_public,
+        softDelete: character.soft_delete,
+        metadata: character.metadata,
+        userId: character.user_id
+      }
+    end)
+    json(conn, filtered)
+  end
+
   defp format_changeset_errors(changeset) do
     Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
       Enum.reduce(opts, msg, fn {key, value}, acc ->

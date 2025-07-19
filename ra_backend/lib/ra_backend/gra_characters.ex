@@ -110,6 +110,7 @@ defmodule RaBackend.GraCharacters do
     GraCharacter
     |> where(user_id: ^user_id)
     |> where(soft_delete: false)
+    |> preload([:labels, :unique_handle])
     |> Repo.all()
   end
 

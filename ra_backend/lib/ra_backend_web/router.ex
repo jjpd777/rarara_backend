@@ -49,6 +49,7 @@ defmodule RaBackendWeb.Router do
     live "/character-labels/:id/edit", GraCharacterLabelLive.Index, :edit
     live "/character-labels/:id", GraCharacterLabelLive.Show, :show
 
+    get "/characters/by_user/:user_id", CharacterController, :list_by_user
 
   end
 
@@ -63,6 +64,7 @@ defmodule RaBackendWeb.Router do
     resources "/users", UserController, only: [:index, :show, :create, :update, :delete]
     post "/characters/empty", CharacterController, :create_empty
     post "/llm/generate", LLMController, :generate
+    get "/characters/by_user/:user_id", CharacterController, :list_by_user
   end
 
   # Other scopes may use custom stacks.
