@@ -19,7 +19,7 @@ defmodule RaBackendWeb.CharacterController do
     end
   end
 
-  def update_with_labels(conn, %{"id" => character_id} = params) do
+  def update(conn, %{"id" => character_id} = params) do
     # Extract label_ids and other attributes
     attrs = Map.take(params, ["name", "biography", "system_prompt", "creation_prompt", "llm_model", "is_public"])
     |> Map.put("label_ids", params["label_ids"] || [])
