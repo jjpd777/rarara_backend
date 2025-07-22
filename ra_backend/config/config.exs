@@ -64,17 +64,3 @@ config :phoenix, :json_library, Jason
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 import_config "#{config_env()}.exs"
-
-config :ra_backend, :llm_providers,
-  openai: [
-    api_key: System.get_env("OPENAI_API_KEY"),
-    base_url: "https://api.openai.com/v1"
-  ],
-  anthropic: [
-    api_key: System.get_env("ANTHROPIC_API_KEY"),
-    base_url: "https://api.anthropic.com/v1"
-  ],
-  gemini: [
-    api_key: System.get_env("GEMINI_API_KEY"),
-    base_url: "https://generativelanguage.googleapis.com/v1beta"
-  ]

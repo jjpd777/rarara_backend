@@ -65,6 +65,21 @@ if config_env() == :prod do
     ],
     secret_key_base: secret_key_base
 
+  # Configure LLM providers with runtime secrets
+  config :ra_backend, :llm_providers,
+    openai: [
+      api_key: System.get_env("OPENAI_API_KEY"),
+      base_url: System.get_env("OPENAI_BASE_URL") || "https://api.openai.com/v1"
+    ],
+    anthropic: [
+      api_key: System.get_env("ANTHROPIC_API_KEY"),
+      base_url: System.get_env("ANTHROPIC_BASE_URL") || "https://api.anthropic.com/v1"
+    ],
+    gemini: [
+      api_key: System.get_env("GEMINI_API_KEY"),
+      base_url: System.get_env("GEMINI_BASE_URL") || "https://generativelanguage.googleapis.com/v1beta"
+    ]
+
   # ## SSL Support
   #
   # To get SSL working, you will need to add the `https` key
