@@ -4,13 +4,16 @@ defmodule RaBackend.LLM.LLMService do
   defmodule Request do
     @moduledoc "Struct for an LLM request."
     @enforce_keys [:prompt, :model]
-    defstruct [:prompt, :model, options: %{}]
+    defstruct [:prompt, :model, :generation_id, options: %{}, start_time: nil]
   end
 
   defmodule Response do
     @moduledoc "Struct for a unified LLM response."
     @enforce_keys [:content, :model, :provider, :finish_reason]
-    defstruct [:content, :model, :provider, :usage, :finish_reason, :raw_response]
+    defstruct [
+      :content, :model, :provider, :usage, :finish_reason, :raw_response,
+      :generation_id, :applied_config, :timing_info, :request_metadata
+    ]
   end
 
   @type llm_request :: %Request{}

@@ -7,7 +7,7 @@ defmodule RaBackend.LLM.Providers.Gemini do
   alias RaBackend.LLM.ProviderHelper
 
   @impl true
-  def generate(%Request{prompt: prompt, model: model, options: options}) do
+  def generate(%Request{prompt: prompt, model: model, options: options, generation_id: generation_id, start_time: start_time}) do
     config = ProviderHelper.get_config(:gemini)
 
     # Validate configuration
@@ -16,8 +16,14 @@ defmodule RaBackend.LLM.Providers.Gemini do
         {"Content-Type", "application/json"}
       ]
 
-      # Add API key to URL instead of header for better compatibility
-      max_tokens = Map.get(options, :max_tokens, 2000)
+      # Apply defaults and capture what's actually used
+      max_tokens = Map.get(options, "max_tokens", 2000)
+      temperature = Map.get(options, "temperature", 0.7)
+
+      applied_config = %{
+        max_tokens: max_tokens,
+        temperature: temperature
+      }
 
       body = Jason.encode!(%{
         contents: [
@@ -29,7 +35,7 @@ defmodule RaBackend.LLM.Providers.Gemini do
         ],
         generationConfig: %{
           maxOutputTokens: max_tokens,
-          temperature: Map.get(options, :temperature, 0.7),
+          temperature: temperature,
           topP: 0.8,
           topK: 40
         },
@@ -58,9 +64,12 @@ defmodule RaBackend.LLM.Providers.Gemini do
 
       Logger.debug("Gemini request: model=#{model}, max_tokens=#{max_tokens}, url=#{String.replace(url, config[:api_key] || "", "***")}")
 
+      provider_start = System.monotonic_time(:millisecond)
+
       case HTTPoison.post(url, body, headers, timeout: 30_000, recv_timeout: 30_000) do
         {:ok, %HTTPoison.Response{status_code: 200, body: response_body}} ->
-          handle_success_response(response_body, model)
+          provider_end = System.monotonic_time(:millisecond)
+          handle_success_response(response_body, model, generation_id, applied_config, start_time, provider_start, provider_end)
         {:ok, error} ->
           ProviderHelper.handle_http_error(error, "Gemini")
         {:error, error} ->
@@ -72,18 +81,31 @@ defmodule RaBackend.LLM.Providers.Gemini do
     end
   end
 
-  defp handle_success_response(response_body, model) do
+  defp handle_success_response(response_body, model, generation_id, applied_config, start_time, provider_start, provider_end) do
     case Jason.decode(response_body) do
       {:ok, %{"candidates" => [candidate | _]} = decoded} ->
         case extract_content(candidate) do
           {:ok, content} ->
+            total_time = if start_time, do: System.monotonic_time(:millisecond) - start_time, else: nil
+            provider_time = provider_end - provider_start
+
             {:ok, %Response{
               content: content,
               model: model,
               provider: :gemini,
               usage: Map.get(decoded, "usageMetadata", %{}),
               finish_reason: Map.get(candidate, "finishReason", "STOP"),
-              raw_response: decoded
+              raw_response: decoded,
+              generation_id: generation_id,
+              applied_config: applied_config,
+              timing_info: %{
+                total_ms: total_time,
+                provider_ms: provider_time
+              },
+              request_metadata: %{
+                provider: :gemini,
+                timestamp: DateTime.utc_now()
+              }
             }}
           {:error, reason} ->
             Logger.error("Gemini content extraction failed: #{inspect(reason)}, candidate: #{inspect(candidate)}")

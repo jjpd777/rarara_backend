@@ -7,7 +7,7 @@ defmodule RaBackend.LLM.Providers.Anthropic do
   alias RaBackend.LLM.ProviderHelper
 
   @impl true
-  def generate(%Request{prompt: prompt, model: model, options: options}) do
+  def generate(%Request{prompt: prompt, model: model, options: options, generation_id: generation_id, start_time: start_time}) do
     config = ProviderHelper.get_config(:anthropic)
 
     # Validate configuration
@@ -18,8 +18,14 @@ defmodule RaBackend.LLM.Providers.Anthropic do
         {"anthropic-version", "2023-06-01"}
       ]
 
-      # Adjust max_tokens for complex prompts - increased default for longer responses
-      max_tokens = Map.get(options, :max_tokens, 2000)
+      # Apply defaults and capture what's actually used
+      max_tokens = Map.get(options, "max_tokens", 2000)
+      temperature = Map.get(options, "temperature", 0.7)
+
+      applied_config = %{
+        max_tokens: max_tokens,
+        temperature: temperature
+      }
 
       body = Jason.encode!(%{
         model: model,
@@ -29,9 +35,12 @@ defmodule RaBackend.LLM.Providers.Anthropic do
 
       Logger.debug("Anthropic request: model=#{model}, max_tokens=#{max_tokens}")
 
+      provider_start = System.monotonic_time(:millisecond)
+
       case HTTPoison.post("#{config[:base_url]}/messages", body, headers, timeout: 30_000, recv_timeout: 30_000) do
         {:ok, %HTTPoison.Response{status_code: 200, body: response_body}} ->
-          handle_success_response(response_body, model)
+          provider_end = System.monotonic_time(:millisecond)
+          handle_success_response(response_body, model, generation_id, applied_config, start_time, provider_start, provider_end)
         {:ok, error} ->
           ProviderHelper.handle_http_error(error, "Anthropic")
         {:error, error} ->
@@ -43,29 +52,55 @@ defmodule RaBackend.LLM.Providers.Anthropic do
     end
   end
 
-  defp handle_success_response(response_body, model) do
+  defp handle_success_response(response_body, model, generation_id, applied_config, start_time, provider_start, provider_end) do
     case Jason.decode(response_body) do
       {:ok, %{
         "content" => [%{"text" => content} | _],
         "usage" => usage,
         "stop_reason" => stop_reason
       } = decoded} ->
+        total_time = if start_time, do: System.monotonic_time(:millisecond) - start_time, else: nil
+        provider_time = provider_end - provider_start
+
         {:ok, %Response{
           content: content,
           model: model,
           provider: :anthropic,
           usage: usage,
           finish_reason: stop_reason,
-          raw_response: decoded
+          raw_response: decoded,
+          generation_id: generation_id,
+          applied_config: applied_config,
+          timing_info: %{
+            total_ms: total_time,
+            provider_ms: provider_time
+          },
+          request_metadata: %{
+            provider: :anthropic,
+            timestamp: DateTime.utc_now()
+          }
         }}
       {:ok, %{"content" => [%{"text" => content} | _]} = decoded} ->
+        total_time = if start_time, do: System.monotonic_time(:millisecond) - start_time, else: nil
+        provider_time = provider_end - provider_start
+
         {:ok, %Response{
           content: content,
           model: model,
           provider: :anthropic,
           usage: Map.get(decoded, "usage", %{}),
           finish_reason: Map.get(decoded, "stop_reason", "stop"),
-          raw_response: decoded
+          raw_response: decoded,
+          generation_id: generation_id,
+          applied_config: applied_config,
+          timing_info: %{
+            total_ms: total_time,
+            provider_ms: provider_time
+          },
+          request_metadata: %{
+            provider: :anthropic,
+            timestamp: DateTime.utc_now()
+          }
         }}
       {:ok, decoded} ->
         Logger.error("Anthropic unexpected response format: #{inspect(decoded)}")
