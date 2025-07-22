@@ -3,9 +3,12 @@ defmodule RaBackend.LLM.Providers.Gemini do
   @behaviour RaBackend.LLM.LLMService
   require Logger
 
+  alias RaBackend.LLM.LLMService.{Request, Response}
+  alias RaBackend.LLM.ProviderHelper
+
   @impl true
-  def generate(%{prompt: prompt, model: model, options: options}) do
-    config = Application.get_env(:ra_backend, :llm_providers)[:gemini]
+  def generate(%Request{prompt: prompt, model: model, options: options}) do
+    config = ProviderHelper.get_config(:gemini)
 
     headers = [
       {"Content-Type", "application/json"}
@@ -56,12 +59,10 @@ defmodule RaBackend.LLM.Providers.Gemini do
     case HTTPoison.post(url, body, headers, timeout: 30_000, recv_timeout: 30_000) do
       {:ok, %HTTPoison.Response{status_code: 200, body: response_body}} ->
         handle_success_response(response_body, model)
-      {:ok, %HTTPoison.Response{status_code: status_code, body: error_body}} ->
-        Logger.error("Gemini HTTP error #{status_code}: #{error_body}")
-        {:error, "HTTP #{status_code}: #{parse_error_message(error_body)}"}
-      {:error, %HTTPoison.Error{reason: reason}} ->
-        Logger.error("Gemini connection error: #{inspect(reason)}")
-        {:error, reason}
+      {:ok, error} ->
+        ProviderHelper.handle_http_error(error, "Gemini")
+      {:error, error} ->
+        ProviderHelper.handle_http_error(error, "Gemini")
     end
   end
 
@@ -70,7 +71,7 @@ defmodule RaBackend.LLM.Providers.Gemini do
       {:ok, %{"candidates" => [candidate | _]} = decoded} ->
         case extract_content(candidate) do
           {:ok, content} ->
-            {:ok, %{
+            {:ok, %Response{
               content: content,
               model: model,
               provider: :gemini,
@@ -106,15 +107,6 @@ defmodule RaBackend.LLM.Providers.Gemini do
         {:error, "Generation stopped: #{finish_reason}"}
       _ ->
         {:error, "No valid text content found"}
-    end
-  end
-
-  defp parse_error_message(error_body) do
-    case Jason.decode(error_body) do
-      {:ok, %{"error" => %{"message" => message}}} -> message
-      {:ok, %{"error" => %{"status" => status, "message" => message}}} -> "#{status}: #{message}"
-      {:ok, %{"error" => message}} when is_binary(message) -> message
-      _ -> "Unknown error"
     end
   end
 

@@ -3,9 +3,12 @@ defmodule RaBackend.LLM.Providers.OpenAI do
   @behaviour RaBackend.LLM.LLMService
   require Logger
 
+  alias RaBackend.LLM.LLMService.{Request, Response}
+  alias RaBackend.LLM.ProviderHelper
+
   @impl true
-  def generate(%{prompt: prompt, model: model, options: options}) do
-    config = Application.get_env(:ra_backend, :llm_providers)[:openai]
+  def generate(%Request{prompt: prompt, model: model, options: options}) do
+    config = ProviderHelper.get_config(:openai)
 
     headers = [
       {"Authorization", "Bearer #{config[:api_key]}"},
@@ -27,19 +30,17 @@ defmodule RaBackend.LLM.Providers.OpenAI do
     case HTTPoison.post("#{config[:base_url]}/chat/completions", body, headers, timeout: 30_000, recv_timeout: 30_000) do
       {:ok, %HTTPoison.Response{status_code: 200, body: response_body}} ->
         handle_success_response(response_body, model)
-      {:ok, %HTTPoison.Response{status_code: status_code, body: error_body}} ->
-        Logger.error("OpenAI HTTP error #{status_code}: #{error_body}")
-        {:error, "HTTP #{status_code}: #{parse_error_message(error_body)}"}
-      {:error, %HTTPoison.Error{reason: reason}} ->
-        Logger.error("OpenAI connection error: #{inspect(reason)}")
-        {:error, reason}
+      {:ok, error} ->
+        ProviderHelper.handle_http_error(error, "OpenAI")
+      {:error, error} ->
+        ProviderHelper.handle_http_error(error, "OpenAI")
     end
   end
 
   defp handle_success_response(response_body, model) do
     case Jason.decode(response_body) do
       {:ok, %{"choices" => [%{"message" => %{"content" => content}} | _] = choices, "usage" => usage}} ->
-        {:ok, %{
+        {:ok, %Response{
           content: content,
           model: model,
           provider: :openai,
@@ -53,14 +54,6 @@ defmodule RaBackend.LLM.Providers.OpenAI do
       {:error, decode_error} ->
         Logger.error("OpenAI JSON decode error: #{inspect(decode_error)}")
         {:error, :invalid_response}
-    end
-  end
-
-  defp parse_error_message(error_body) do
-    case Jason.decode(error_body) do
-      {:ok, %{"error" => %{"message" => message}}} -> message
-      {:ok, %{"error" => message}} when is_binary(message) -> message
-      _ -> "Unknown error"
     end
   end
 end

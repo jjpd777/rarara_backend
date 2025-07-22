@@ -3,9 +3,12 @@ defmodule RaBackend.LLM.Providers.Anthropic do
   @behaviour RaBackend.LLM.LLMService
   require Logger
 
+  alias RaBackend.LLM.LLMService.{Request, Response}
+  alias RaBackend.LLM.ProviderHelper
+
   @impl true
-  def generate(%{prompt: prompt, model: model, options: options}) do
-    config = Application.get_env(:ra_backend, :llm_providers)[:anthropic]
+  def generate(%Request{prompt: prompt, model: model, options: options}) do
+    config = ProviderHelper.get_config(:anthropic)
 
     headers = [
       {"x-api-key", config[:api_key]},
@@ -27,12 +30,10 @@ defmodule RaBackend.LLM.Providers.Anthropic do
     case HTTPoison.post("#{config[:base_url]}/messages", body, headers, timeout: 30_000, recv_timeout: 30_000) do
       {:ok, %HTTPoison.Response{status_code: 200, body: response_body}} ->
         handle_success_response(response_body, model)
-      {:ok, %HTTPoison.Response{status_code: status_code, body: error_body}} ->
-        Logger.error("Anthropic HTTP error #{status_code}: #{error_body}")
-        {:error, "HTTP #{status_code}: #{parse_error_message(error_body)}"}
-      {:error, %HTTPoison.Error{reason: reason}} ->
-        Logger.error("Anthropic connection error: #{inspect(reason)}")
-        {:error, reason}
+      {:ok, error} ->
+        ProviderHelper.handle_http_error(error, "Anthropic")
+      {:error, error} ->
+        ProviderHelper.handle_http_error(error, "Anthropic")
     end
   end
 
@@ -43,7 +44,7 @@ defmodule RaBackend.LLM.Providers.Anthropic do
         "usage" => usage,
         "stop_reason" => stop_reason
       } = decoded} ->
-        {:ok, %{
+        {:ok, %Response{
           content: content,
           model: model,
           provider: :anthropic,
@@ -52,7 +53,7 @@ defmodule RaBackend.LLM.Providers.Anthropic do
           raw_response: decoded
         }}
       {:ok, %{"content" => [%{"text" => content} | _]} = decoded} ->
-        {:ok, %{
+        {:ok, %Response{
           content: content,
           model: model,
           provider: :anthropic,
@@ -66,14 +67,6 @@ defmodule RaBackend.LLM.Providers.Anthropic do
       {:error, decode_error} ->
         Logger.error("Anthropic JSON decode error: #{inspect(decode_error)}")
         {:error, :invalid_response}
-    end
-  end
-
-  defp parse_error_message(error_body) do
-    case Jason.decode(error_body) do
-      {:ok, %{"error" => %{"message" => message}}} -> message
-      {:ok, %{"error" => message}} when is_binary(message) -> message
-      _ -> "Unknown error"
     end
   end
 end

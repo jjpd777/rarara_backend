@@ -1,16 +1,19 @@
 defmodule RaBackend.LLM.ProviderRouter do
   @moduledoc "Routes requests to appropriate LLM provider based on model name"
   require Logger
+  alias RaBackend.LLM.LLMService.Request
 
-  def route_request(%{model: model} = request) do
-    cond do
-      String.starts_with?(model, "gpt-") ->
-        RaBackend.LLM.Providers.OpenAI.generate(request)
-      String.starts_with?(model, "claude-") ->
-        RaBackend.LLM.Providers.Anthropic.generate(request)
-      String.starts_with?(model, "gemini-") ->
-        RaBackend.LLM.Providers.Gemini.generate(request)
-      true ->
+  @provider_map %{
+    "gpt-" => RaBackend.LLM.Providers.OpenAI,
+    "claude-" => RaBackend.LLM.Providers.Anthropic,
+    "gemini-" => RaBackend.LLM.Providers.Gemini
+  }
+
+  def route_request(%Request{model: model} = request) do
+    case Enum.find(@provider_map, fn {prefix, _} -> String.starts_with?(model, prefix) end) do
+      {_, provider} ->
+        provider.generate(request)
+      nil ->
         {:error, :unsupported_model}
     end
   end
