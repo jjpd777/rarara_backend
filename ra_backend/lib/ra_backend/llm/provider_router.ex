@@ -2,18 +2,13 @@ defmodule RaBackend.LLM.ProviderRouter do
   @moduledoc "Routes requests to appropriate LLM provider based on model name"
   require Logger
   alias RaBackend.LLM.LLMService.Request
-
-  @provider_map %{
-    "gpt-" => RaBackend.LLM.Providers.OpenAI,
-    "claude-" => RaBackend.LLM.Providers.Anthropic,
-    "gemini-" => RaBackend.LLM.Providers.Gemini
-  }
+  alias RaBackend.LLM.ModelRegistry
 
   def route_request(%Request{model: model} = request) do
-    case Enum.find(@provider_map, fn {prefix, _} -> String.starts_with?(model, prefix) end) do
-      {_, provider} ->
+    case ModelRegistry.find_provider_by_model(model) do
+      {:ok, provider} ->
         provider.generate(request)
-      nil ->
+      {:error, :unsupported_model} ->
         {:error, :unsupported_model}
     end
   end
@@ -29,7 +24,7 @@ defmodule RaBackend.LLM.ProviderRouter do
       {:ok, response} ->
         {:ok, response}
       {:error, reason} when attempt < max_retries ->
-        Logger.warn("LLM attempt #{attempt + 1} failed: #{inspect(reason)}, retrying...")
+        Logger.warning("LLM attempt #{attempt + 1} failed: #{inspect(reason)}, retrying...")
         :timer.sleep(1000 * (attempt + 1))  # Exponential backoff
         do_request_with_retry(request, max_retries, attempt + 1)
       {:error, reason} ->

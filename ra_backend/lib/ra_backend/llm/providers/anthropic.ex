@@ -10,30 +10,36 @@ defmodule RaBackend.LLM.Providers.Anthropic do
   def generate(%Request{prompt: prompt, model: model, options: options}) do
     config = ProviderHelper.get_config(:anthropic)
 
-    headers = [
-      {"x-api-key", config[:api_key]},
-      {"Content-Type", "application/json"},
-      {"anthropic-version", "2023-06-01"}
-    ]
+    # Validate configuration
+    if config && config[:api_key] && config[:base_url] do
+      headers = [
+        {"x-api-key", config[:api_key]},
+        {"Content-Type", "application/json"},
+        {"anthropic-version", "2023-06-01"}
+      ]
 
-    # Adjust max_tokens for complex prompts - increased default for longer responses
-    max_tokens = Map.get(options, :max_tokens, 2000)
+      # Adjust max_tokens for complex prompts - increased default for longer responses
+      max_tokens = Map.get(options, :max_tokens, 2000)
 
-    body = Jason.encode!(%{
-      model: model,
-      max_tokens: max_tokens,
-      messages: [%{role: "user", content: prompt}]
-    })
+      body = Jason.encode!(%{
+        model: model,
+        max_tokens: max_tokens,
+        messages: [%{role: "user", content: prompt}]
+      })
 
-    Logger.debug("Anthropic request: model=#{model}, max_tokens=#{max_tokens}")
+      Logger.debug("Anthropic request: model=#{model}, max_tokens=#{max_tokens}")
 
-    case HTTPoison.post("#{config[:base_url]}/messages", body, headers, timeout: 30_000, recv_timeout: 30_000) do
-      {:ok, %HTTPoison.Response{status_code: 200, body: response_body}} ->
-        handle_success_response(response_body, model)
-      {:ok, error} ->
-        ProviderHelper.handle_http_error(error, "Anthropic")
-      {:error, error} ->
-        ProviderHelper.handle_http_error(error, "Anthropic")
+      case HTTPoison.post("#{config[:base_url]}/messages", body, headers, timeout: 30_000, recv_timeout: 30_000) do
+        {:ok, %HTTPoison.Response{status_code: 200, body: response_body}} ->
+          handle_success_response(response_body, model)
+        {:ok, error} ->
+          ProviderHelper.handle_http_error(error, "Anthropic")
+        {:error, error} ->
+          ProviderHelper.handle_http_error(error, "Anthropic")
+      end
+    else
+      Logger.error("Anthropic configuration missing or invalid")
+      {:error, "Anthropic API key or base URL not configured"}
     end
   end
 

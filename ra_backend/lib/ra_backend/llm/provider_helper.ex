@@ -3,7 +3,16 @@ defmodule RaBackend.LLM.ProviderHelper do
   require Logger
 
   def get_config(provider) do
-    Application.get_env(:ra_backend, :llm_providers)[provider]
+    case Application.get_env(:ra_backend, :llm_providers) do
+      nil ->
+        Logger.error("No LLM providers configured")
+        nil
+      providers when is_list(providers) ->
+        providers[provider]
+      _ ->
+        Logger.error("Invalid LLM providers configuration")
+        nil
+    end
   end
 
   def handle_http_error(%HTTPoison.Response{status_code: status_code, body: error_body}, provider) do

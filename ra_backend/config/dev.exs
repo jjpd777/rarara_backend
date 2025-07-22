@@ -1,8 +1,9 @@
 import Config
 
 # Load environment variables from .env file
-if File.exists?(".env") do
-  File.stream!(".env")
+env_file_path = Path.join([__DIR__, "..", ".env"])
+if File.exists?(env_file_path) do
+  File.stream!(env_file_path)
   |> Stream.map(&String.trim/1)
   |> Stream.filter(&(&1 != "" && !String.starts_with?(&1, "#")))
   |> Stream.map(fn line ->
@@ -10,6 +11,8 @@ if File.exists?(".env") do
     {String.trim(key), String.trim(value)}
   end)
   |> Enum.each(fn {key, value} -> System.put_env(key, value) end)
+else
+  IO.puts("Warning: .env file not found at #{env_file_path}")
 end
 
 # Configure your database
@@ -96,3 +99,18 @@ config :phoenix_live_view,
 
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false
+
+# Configure LLM providers for development
+config :ra_backend, :llm_providers,
+  openai: [
+    api_key: System.get_env("OPENAI_API_KEY") || "dummy_key_for_dev",
+    base_url: System.get_env("OPENAI_BASE_URL") || "https://api.openai.com/v1"
+  ],
+  anthropic: [
+    api_key: System.get_env("ANTHROPIC_API_KEY") || "dummy_key_for_dev",
+    base_url: System.get_env("ANTHROPIC_BASE_URL") || "https://api.anthropic.com/v1"
+  ],
+  gemini: [
+    api_key: System.get_env("GEMINI_API_KEY") || "dummy_key_for_dev",
+    base_url: System.get_env("GEMINI_BASE_URL") || "https://generativelanguage.googleapis.com/v1beta"
+  ]

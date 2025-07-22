@@ -10,59 +10,65 @@ defmodule RaBackend.LLM.Providers.Gemini do
   def generate(%Request{prompt: prompt, model: model, options: options}) do
     config = ProviderHelper.get_config(:gemini)
 
-    headers = [
-      {"Content-Type", "application/json"}
-    ]
-
-    # Add API key to URL instead of header for better compatibility
-    max_tokens = Map.get(options, :max_tokens, 2000)
-
-    body = Jason.encode!(%{
-      contents: [
-        %{
-          parts: [
-            %{text: prompt}
-          ]
-        }
-      ],
-      generationConfig: %{
-        maxOutputTokens: max_tokens,
-        temperature: Map.get(options, :temperature, 0.7),
-        topP: 0.8,
-        topK: 40
-      },
-      safetySettings: [
-        %{
-          category: "HARM_CATEGORY_HARASSMENT",
-          threshold: "BLOCK_ONLY_HIGH"
-        },
-        %{
-          category: "HARM_CATEGORY_HATE_SPEECH",
-          threshold: "BLOCK_ONLY_HIGH"
-        },
-        %{
-          category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-          threshold: "BLOCK_ONLY_HIGH"
-        },
-        %{
-          category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-          threshold: "BLOCK_ONLY_HIGH"
-        }
+    # Validate configuration
+    if config && config[:api_key] do
+      headers = [
+        {"Content-Type", "application/json"}
       ]
-    })
 
-    # Fix model resolution and use v1 API
-    url = "https://generativelanguage.googleapis.com/v1/models/#{model}:generateContent?key=#{config[:api_key]}"
+      # Add API key to URL instead of header for better compatibility
+      max_tokens = Map.get(options, :max_tokens, 2000)
 
-    Logger.debug("Gemini request: model=#{model}, max_tokens=#{max_tokens}, url=#{String.replace(url, config[:api_key], "***")}")
+      body = Jason.encode!(%{
+        contents: [
+          %{
+            parts: [
+              %{text: prompt}
+            ]
+          }
+        ],
+        generationConfig: %{
+          maxOutputTokens: max_tokens,
+          temperature: Map.get(options, :temperature, 0.7),
+          topP: 0.8,
+          topK: 40
+        },
+        safetySettings: [
+          %{
+            category: "HARM_CATEGORY_HARASSMENT",
+            threshold: "BLOCK_ONLY_HIGH"
+          },
+          %{
+            category: "HARM_CATEGORY_HATE_SPEECH",
+            threshold: "BLOCK_ONLY_HIGH"
+          },
+          %{
+            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            threshold: "BLOCK_ONLY_HIGH"
+          },
+          %{
+            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+            threshold: "BLOCK_ONLY_HIGH"
+          }
+        ]
+      })
 
-    case HTTPoison.post(url, body, headers, timeout: 30_000, recv_timeout: 30_000) do
-      {:ok, %HTTPoison.Response{status_code: 200, body: response_body}} ->
-        handle_success_response(response_body, model)
-      {:ok, error} ->
-        ProviderHelper.handle_http_error(error, "Gemini")
-      {:error, error} ->
-        ProviderHelper.handle_http_error(error, "Gemini")
+      # Fix model resolution and use v1 API
+      url = "https://generativelanguage.googleapis.com/v1/models/#{model}:generateContent?key=#{config[:api_key]}"
+
+      Logger.debug("Gemini request: model=#{model}, max_tokens=#{max_tokens}, url=#{String.replace(url, config[:api_key] || "", "***")}")
+
+      case HTTPoison.post(url, body, headers, timeout: 30_000, recv_timeout: 30_000) do
+        {:ok, %HTTPoison.Response{status_code: 200, body: response_body}} ->
+          handle_success_response(response_body, model)
+        {:ok, error} ->
+          ProviderHelper.handle_http_error(error, "Gemini")
+        {:error, error} ->
+          ProviderHelper.handle_http_error(error, "Gemini")
+      end
+    else
+      Logger.error("Gemini configuration missing or invalid")
+      {:error, "Gemini API key not configured"}
     end
   end
 

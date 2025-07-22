@@ -44,7 +44,7 @@ defmodule RaBackend.GraUsers.GraUser do
   defp maybe_validate_email(changeset) do
     case get_field(changeset, :email) do
       nil -> changeset
-      email -> validate_format(changeset, :email, ~r/@/)
+      _email -> validate_format(changeset, :email, ~r/@/)
     end
   end
 end

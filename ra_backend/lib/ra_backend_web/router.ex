@@ -56,14 +56,17 @@ defmodule RaBackendWeb.Router do
   scope "/api", RaBackendWeb do
     pipe_through :api
 
-    get "/labels", LabelController, :index
+    # LLM routes
+    post "/llm/generate", LLMController, :generate
+    get "/llm/models", LLMController, :list_models
 
-    # API Endpoints (MISSING - ADD THESE)
+    # Standard resource routes
+    resources "/users", GraUserLive.Index, except: [:new, :edit]
+    resources "/labels", GraLabelLive.Index, except: [:new, :edit]
     resources "/characters", CharacterController, only: [:index, :show, :create, :update, :delete]
     resources "/character-handles", CharacterHandleController, only: [:index, :show, :create, :update, :delete]
     resources "/users", UserController, only: [:index, :show, :create, :update, :delete]
     post "/characters/empty", CharacterController, :create_empty
-    post "/llm/generate", LLMController, :generate
     get "/characters/by_user/:user_id", CharacterController, :list_by_user
   end
 

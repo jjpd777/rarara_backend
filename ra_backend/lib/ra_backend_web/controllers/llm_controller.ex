@@ -3,6 +3,7 @@ defmodule RaBackendWeb.LLMController do
   require Logger
   alias RaBackend.LLM.LLMService.Request
   alias RaBackend.LLM.ProviderRouter
+  alias RaBackend.LLM.ModelRegistry
 
   def generate(conn, %{"prompt" => prompt, "model" => model} = params) do
     request = %Request{
@@ -23,6 +24,10 @@ defmodule RaBackendWeb.LLMController do
         |> put_status(:bad_request)
         |> json(%{error: format_error(reason)})
     end
+  end
+
+  def list_models(conn, _params) do
+    json(conn, %{models: ModelRegistry.all_for_api()})
   end
 
   defp format_error(reason) when is_binary(reason), do: reason
