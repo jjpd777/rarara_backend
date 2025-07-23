@@ -6,7 +6,7 @@ defmodule RaBackend.LLM.ProviderHelper do
   @provider_minimums %{
     openai: 50,      # OpenAI is flexible with low tokens
     anthropic: 75,   # Anthropic needs a bit more
-    gemini: 300      # Gemini requires higher minimum for any meaningful content
+    gemini: 100      # Gemini requires a moderate minimum
   }
 
   def get_config(provider) do
