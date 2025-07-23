@@ -2,6 +2,13 @@ defmodule RaBackend.LLM.ProviderHelper do
   @moduledoc "Helper module for LLM providers"
   require Logger
 
+  # Provider-specific minimum tokens for reliable short content generation
+  @provider_minimums %{
+    openai: 50,      # OpenAI is flexible with low tokens
+    anthropic: 75,   # Anthropic needs a bit more
+    gemini: 300      # Gemini requires higher minimum for any meaningful content
+  }
+
   def get_config(provider) do
     case Application.get_env(:ra_backend, :llm_providers) do
       nil ->
@@ -13,6 +20,36 @@ defmodule RaBackend.LLM.ProviderHelper do
         Logger.error("Invalid LLM providers configuration")
         nil
     end
+  end
+
+  @doc """
+  Ensures token allocation meets provider minimums for reliable generation.
+  Critical for short input/output scenarios like prompt polishing.
+  """
+  def ensure_minimum_tokens(provider, requested_tokens) do
+    minimum = Map.get(@provider_minimums, provider, 50)
+    max(requested_tokens, minimum)
+  end
+
+  @doc """
+  Calculates smart token allocation based on input length and provider capabilities.
+  """
+  def calculate_smart_tokens(prompt, provider, user_max_tokens \\ nil) do
+    # Base calculation on prompt length
+    prompt_length = String.length(prompt)
+
+    base_tokens = cond do
+      prompt_length < 50 -> 75    # Very short prompt
+      prompt_length < 150 -> 100  # Short prompt
+      prompt_length < 300 -> 150  # Medium prompt
+      true -> 200                 # Longer prompt
+    end
+
+    # Use user preference if provided, otherwise use calculated
+    requested = user_max_tokens || base_tokens
+
+    # Ensure meets provider minimum
+    ensure_minimum_tokens(provider, requested)
   end
 
   def handle_http_error(%HTTPoison.Response{status_code: status_code, body: error_body}, provider) do
@@ -89,6 +126,10 @@ defmodule RaBackend.LLM.ProviderHelper do
         %{code: "PROVIDER_ERROR", message: reason, category: :server_error}
       String.contains?(reason, "timeout") ->
         %{code: "TIMEOUT", message: reason, category: :timeout}
+      String.contains?(reason, "Content blocked") ->
+        %{code: "CONTENT_FILTERED", message: reason, category: :content_policy}
+      String.contains?(reason, "No content generated") ->
+        %{code: "GENERATION_INCOMPLETE", message: reason, category: :generation}
       true ->
         %{code: "GENERATION_ERROR", message: reason, category: :unknown}
     end

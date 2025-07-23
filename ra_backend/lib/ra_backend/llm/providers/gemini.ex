@@ -16,13 +16,16 @@ defmodule RaBackend.LLM.Providers.Gemini do
         {"Content-Type", "application/json"}
       ]
 
-      # Apply defaults and capture what's actually used
-      max_tokens = Map.get(options, "max_tokens", 2000)
+      # Smart token allocation - ensure Gemini gets enough tokens for reliable generation
+      user_max_tokens = Map.get(options, "max_tokens")
+      smart_max_tokens = ProviderHelper.calculate_smart_tokens(prompt, :gemini, user_max_tokens)
       temperature = Map.get(options, "temperature", 0.7)
 
       applied_config = %{
-        max_tokens: max_tokens,
-        temperature: temperature
+        max_tokens: smart_max_tokens,
+        temperature: temperature,
+        user_requested: user_max_tokens,
+        provider_adjusted: smart_max_tokens != user_max_tokens
       }
 
       body = Jason.encode!(%{
@@ -34,7 +37,7 @@ defmodule RaBackend.LLM.Providers.Gemini do
           }
         ],
         generationConfig: %{
-          maxOutputTokens: max_tokens,
+          maxOutputTokens: smart_max_tokens,
           temperature: temperature,
           topP: 0.8,
           topK: 40
@@ -42,19 +45,19 @@ defmodule RaBackend.LLM.Providers.Gemini do
         safetySettings: [
           %{
             category: "HARM_CATEGORY_HARASSMENT",
-            threshold: "BLOCK_ONLY_HIGH"
+            threshold: "BLOCK_NONE"
           },
           %{
             category: "HARM_CATEGORY_HATE_SPEECH",
-            threshold: "BLOCK_ONLY_HIGH"
+            threshold: "BLOCK_NONE"
           },
           %{
             category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-            threshold: "BLOCK_ONLY_HIGH"
+            threshold: "BLOCK_NONE"
           },
           %{
             category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-            threshold: "BLOCK_ONLY_HIGH"
+            threshold: "BLOCK_NONE"
           }
         ]
       })
@@ -62,7 +65,7 @@ defmodule RaBackend.LLM.Providers.Gemini do
       # Fix model resolution and use v1 API
       url = "https://generativelanguage.googleapis.com/v1/models/#{model}:generateContent?key=#{config[:api_key]}"
 
-      Logger.debug("Gemini request: model=#{model}, max_tokens=#{max_tokens}, url=#{String.replace(url, config[:api_key] || "", "***")}")
+      Logger.debug("Gemini request: model=#{model}, max_tokens=#{smart_max_tokens}, url=#{String.replace(url, config[:api_key] || "", "***")}")
 
       provider_start = System.monotonic_time(:millisecond)
 
@@ -125,14 +128,30 @@ defmodule RaBackend.LLM.Providers.Gemini do
 
   defp extract_content(candidate) do
     case candidate do
+      # PRIORITY 1: Check for content first - even if truncated, it's still valid
       %{"content" => %{"parts" => [%{"text" => text} | _]}} when is_binary(text) and text != "" ->
         {:ok, text}
+
+      # PRIORITY 2: Check for content with empty text but MAX_TOKENS (try to extract something)
+      %{"content" => %{"parts" => [%{"text" => ""} | _]}, "finishReason" => "MAX_TOKENS"} ->
+        {:ok, "[Content too brief for token limit - try simpler prompt or increase max_tokens]"}
+
+      # PRIORITY 3: Handle empty response with MAX_TOKENS - more helpful message
+      %{"finishReason" => "MAX_TOKENS"} ->
+        {:ok, "[Unable to generate content within token limit - please increase max_tokens or simplify prompt]"}
+
+      # PRIORITY 4: Only error for genuine content blocks
+      %{"finishReason" => "SAFETY", "safetyRatings" => ratings} ->
+        {:error, "Content blocked by safety filters: #{inspect(ratings)}"}
       %{"finishReason" => "SAFETY"} ->
         {:error, "Content blocked by safety filters"}
       %{"finishReason" => "RECITATION"} ->
         {:error, "Content blocked due to recitation"}
+
+      # PRIORITY 5: Other finish reasons without content
       %{"finishReason" => finish_reason} ->
-        {:error, "Generation stopped: #{finish_reason}"}
+        {:error, "No content generated: #{finish_reason}"}
+
       _ ->
         {:error, "No valid text content found"}
     end

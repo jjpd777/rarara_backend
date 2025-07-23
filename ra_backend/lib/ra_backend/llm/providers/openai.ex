@@ -17,23 +17,26 @@ defmodule RaBackend.LLM.Providers.OpenAI do
         {"Content-Type", "application/json"}
       ]
 
-      # Apply defaults and capture what's actually used
-      max_tokens = Map.get(options, "max_tokens", 400)
+      # Smart token allocation - ensure consistent behavior with other providers
+      user_max_tokens = Map.get(options, "max_tokens")
+      smart_max_tokens = ProviderHelper.calculate_smart_tokens(prompt, :openai, user_max_tokens)
       temperature = Map.get(options, "temperature", 0.7)
 
       applied_config = %{
-        max_tokens: max_tokens,
-        temperature: temperature
+        max_tokens: smart_max_tokens,
+        temperature: temperature,
+        user_requested: user_max_tokens,
+        provider_adjusted: smart_max_tokens != user_max_tokens
       }
 
       body = Jason.encode!(%{
         model: model,
         messages: [%{role: "user", content: prompt}],
-        max_tokens: max_tokens,
+        max_tokens: smart_max_tokens,
         temperature: temperature
       })
 
-      Logger.debug("OpenAI request: model=#{model}, max_tokens=#{max_tokens}")
+      Logger.debug("OpenAI request: model=#{model}, max_tokens=#{smart_max_tokens}")
 
       provider_start = System.monotonic_time(:millisecond)
 

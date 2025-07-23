@@ -1,0 +1,864 @@
+
+= * 80
+ 🔥🔥🔥 PSYCHO MODE LLM API TESTING SUITE 🔥🔥🔥
+= * 80
+⚠️  PSYCHO MODE ENABLED - SHOWING EVERY REQUEST AND RESPONSE!
+ℹ️  Base URL: http://localhost:4000
+
+= * 80
+ 📋 TESTING MODELS LIST ENDPOINT
+= * 80
+
+- * 60
+ List Available Models
+- * 60
+📤 REQUEST: URL: http://localhost:4000/api/llm/models
+📤 REQUEST: METHOD: GET
+📤 REQUEST: BODY: (empty)
+
+ℹ️  🚀 Sending request...
+📥 RESPONSE: STATUS: 200
+📥 RESPONSE: HEADERS: Content-Type=application/json; charset=utf-8, Length=648
+📥 RESPONSE: BODY:
+{
+  "data": {
+    "models": [
+      {
+        "model": "gpt-4.1",
+        "display_name": "OpenAI - GPT-4.1",
+        "house": "OpenAI",
+        "model_type": "text_gen"
+      },
+      {
+        "model": "claude-sonnet-4-20250514",
+        "display_name": "Anthropic - Claude Sonnet 4",
+        "house": "Anthropic",
+        "model_type": "text_gen"
+      },
+      {
+        "model": "gemini-2.5-pro",
+        "display_name": "Google - Gemini 2.5 Flash",
+        "house": "Google",
+        "model_type": "text_gen"
+      },
+      {
+        "model": "gemini-2.5",
+        "display_name": "Google - Gemini 2.5",
+        "house": "Google",
+        "model_type": "text_gen"
+      },
+      {
+        "model": "gemini-2.5-pro",
+        "display_name": "Google - Gemini 2.5 Pro",
+        "house": "Google",
+        "model_type": "text_gen"
+      }
+    ]
+  },
+  "metadata": {
+    "timestamp": "2025-07-23T03:59:38.096Z",
+    "totalCount": 5
+  },
+  "success": true
+}
+
+✅ ✨ List Available Models - PASSED ✨
+✅ Found 5 available models:
+  🤖 gpt-4.1 (OpenAI) - OpenAI - GPT-4.1
+  🤖 claude-sonnet-4-20250514 (Anthropic) - Anthropic - Claude Sonnet 4
+  🤖 gemini-2.5-pro (Google) - Google - Gemini 2.5 Flash
+  🤖 gemini-2.5 (Google) - Google - Gemini 2.5
+  🤖 gemini-2.5-pro (Google) - Google - Gemini 2.5 Pro
+
+= * 80
+ 🤖 TESTING OPENAI PROVIDER
+= * 80
+
+- * 60
+ OpenAI - Basic Generation
+- * 60
+📤 REQUEST: URL: http://localhost:4000/api/llm/generate
+📤 REQUEST: METHOD: POST
+📤 REQUEST: BODY:
+{
+  "model": "gpt-4.1",
+  "prompt": "Hello, world!",
+  "options": {
+    "temperature": 0.7,
+    "max_tokens": 50
+  }
+}
+
+ℹ️  🚀 Sending request...
+📥 RESPONSE: STATUS: 200
+📥 RESPONSE: HEADERS: Content-Type=application/json; charset=utf-8, Length=399
+📥 RESPONSE: BODY:
+{
+  "data": {
+    "generationId": "req_08def5423082435e",
+    "content": "Hello, world! 👋 How can I help you today?"
+  },
+  "metadata": {
+    "request": {
+      "timestamp": "2025-07-23T03:59:41.243Z",
+      "attemptNumber": 1,
+      "retryCount": 0
+    },
+    "config": {
+      "temperature": 0.7,
+      "finishReason": "stop"
+    },
+    "tokens": {
+      "input": 11,
+      "output": 13,
+      "total": 24,
+      "maxRequested": 50
+    },
+    "provider": "openai",
+    "timing": {
+      "responseMs": 1060
+    },
+    "model": "gpt-4.1"
+  },
+  "success": true
+}
+
+✅ ✨ OpenAI - Basic Generation - PASSED ✨
+ℹ️  📝 CONTENT: 'Hello, world! 👋 How can I help you today?'
+ℹ️  📏 CONTENT LENGTH: 42 characters
+ℹ️  🎯 TOKENS: Input=11, Output=13, Total=24, MaxRequested=50
+ℹ️  ⏱️  TIMING: 1060ms
+ℹ️  🤖 PROVIDER: openai / MODEL: gpt-4.1
+ℹ️  🔧 CONFIG: Temperature=0.7, FinishReason=stop
+
+Name                           Value
+----                           -----
+StatusCode                     200
+Success                        True
+Response                       @{data=; metadata=; success=True}
+
+- * 60
+ OpenAI - Prompt Polishing (YOUR USE CASE)
+- * 60
+📤 REQUEST: URL: http://localhost:4000/api/llm/generate
+📤 REQUEST: METHOD: POST
+📤 REQUEST: BODY:
+{
+  "model": "gpt-4.1",
+  "prompt": "Improve this character creation prompt. Output only the polished prompt: Medieval monk",
+  "options": {
+    "temperature": 0.7,
+    "max_tokens": 50
+  }
+}
+
+ℹ️  🚀 Sending request...
+📥 RESPONSE: STATUS: 200
+📥 RESPONSE: HEADERS: Content-Type=application/json; charset=utf-8, Length=652
+📥 RESPONSE: BODY:
+{
+  "data": {
+    "generationId": "req_dad9a97bdeb6b97d",
+    "content": "Create a detailed character profile for a medieval monk. Consider their background, daily life, personal beliefs, notable skills, appearance, and any inner conflicts or aspirations. Include details about the monastery they belong to, their relationships with fellow monks and the outside world"
+  },
+  "metadata": {
+    "request": {
+      "timestamp": "2025-07-23T03:59:44.486Z",
+      "attemptNumber": 1,
+      "retryCount": 0
+    },
+    "config": {
+      "temperature": 0.7,
+      "finishReason": "length"
+    },
+    "tokens": {
+      "input": 21,
+      "output": 50,
+      "total": 71,
+      "maxRequested": 50
+    },
+    "provider": "openai",
+    "timing": {
+      "responseMs": 1130
+    },
+    "model": "gpt-4.1"
+  },
+  "success": true
+}
+
+✅ ✨ OpenAI - Prompt Polishing (YOUR USE CASE) - PASSED ✨
+ℹ️  📝 CONTENT: 'Create a detailed character profile for a medieval monk. Consider their background, daily life, pers...'
+ℹ️  📏 CONTENT LENGTH: 293 characters
+ℹ️  🎯 TOKENS: Input=21, Output=50, Total=71, MaxRequested=50
+ℹ️  ⏱️  TIMING: 1130ms
+ℹ️  🤖 PROVIDER: openai / MODEL: gpt-4.1
+ℹ️  🔧 CONFIG: Temperature=0.7, FinishReason=length
+StatusCode                     200
+Success                        True
+Response                       @{data=; metadata=; success=True}
+
+- * 60
+ OpenAI - Low Token Limit Stress Test
+- * 60
+📤 REQUEST: URL: http://localhost:4000/api/llm/generate
+📤 REQUEST: METHOD: POST
+📤 REQUEST: BODY:
+{
+  "model": "gpt-4.1",
+  "prompt": "Brief response please",
+  "options": {
+    "temperature": 0.5,
+    "max_tokens": 20
+  }
+}
+
+ℹ️  🚀 Sending request...
+📥 RESPONSE: STATUS: 200
+📥 RESPONSE: HEADERS: Content-Type=application/json; charset=utf-8, Length=496
+📥 RESPONSE: BODY:
+{
+  "data": {
+    "generationId": "req_d728974178f84d64",
+    "content": "Of course! How can I help you?"
+  },
+  "metadata": {
+    "request": {
+      "timestamp": "2025-07-23T03:59:47.7Z",
+      "attemptNumber": 1,
+      "retryCount": 0
+    },
+    "config": {
+      "temperature": 0.5,
+      "finishReason": "stop",
+      "adjustmentReason": "Provider minimum tokens for reliable generation",
+      "providerAdjusted": 50,
+      "userRequested": 20
+    },
+    "tokens": {
+      "input": 10,
+      "output": 9,
+      "total": 19,
+      "maxRequested": 50
+    },
+    "provider": "openai",
+    "timing": {
+      "responseMs": 1087
+    },
+    "model": "gpt-4.1"
+  },
+  "success": true
+}
+
+✅ ✨ OpenAI - Low Token Limit Stress Test - PASSED ✨
+ℹ️  📝 CONTENT: 'Of course! How can I help you?'
+ℹ️  📏 CONTENT LENGTH: 30 characters
+ℹ️  🎯 TOKENS: Input=10, Output=9, Total=19, MaxRequested=50
+ℹ️  ⏱️  TIMING: 1087ms
+ℹ️  🤖 PROVIDER: openai / MODEL: gpt-4.1
+ℹ️  🔧 CONFIG: Temperature=0.5, FinishReason=stop
+⚠️  ⚙️  TOKEN ADJUSTMENT: 20 → 50 (Provider minimum tokens for reliable generation)
+StatusCode                     200
+Success                        True
+Response                       @{data=; metadata=; success=True}
+
+- * 60
+ OpenAI - No Options (Default Behavior)
+- * 60
+📤 REQUEST: URL: http://localhost:4000/api/llm/generate
+📤 REQUEST: METHOD: POST
+📤 REQUEST: BODY:
+{
+  "model": "gpt-4.1",
+  "prompt": "Test without options",
+  "options": {}
+}
+
+ℹ️  🚀 Sending request...
+📥 RESPONSE: STATUS: 200
+📥 RESPONSE: HEADERS: Content-Type=application/json; charset=utf-8, Length=764
+📥 RESPONSE: BODY:
+{
+  "data": {
+    "generationId": "req_0b1128b2061b540e",
+    "content": "Of course! Here is a sample test without options:\n\n---\n\n**1. What is the capital city of France?**\n\n---\n\n**2. Who wrote the play \"Romeo and Juliet\"?**\n\n---\n\n**3. What is the chemical symbol for water?**\n\n---\n\n**4. Name the largest planet in our Solar System.**\n\n---\n\n**5. In what year did the"
+  },
+  "metadata": {
+    "request": {
+      "timestamp": "2025-07-23T03:59:51.111Z",
+      "attemptNumber": 1,
+      "retryCount": 0
+    },
+    "config": {
+      "temperature": 0.7,
+      "finishReason": "length",
+      "adjustmentReason": "Provider minimum tokens for reliable generation",
+      "providerAdjusted": 75
+    },
+    "tokens": {
+      "input": 10,
+      "output": 75,
+      "total": 85,
+      "maxRequested": 75
+    },
+    "provider": "openai",
+    "timing": {
+      "responseMs": 1305
+    },
+    "model": "gpt-4.1"
+  },
+  "success": true
+}
+
+✅ ✨ OpenAI - No Options (Default Behavior) - PASSED ✨
+ℹ️  📝 CONTENT: 'Of course! Here is a sample test without options:
+
+---
+
+**1. What is the capital city of France?**
+
+...'
+ℹ️  📏 CONTENT LENGTH: 292 characters
+ℹ️  🎯 TOKENS: Input=10, Output=75, Total=85, MaxRequested=75
+ℹ️  ⏱️  TIMING: 1305ms
+ℹ️  🤖 PROVIDER: openai / MODEL: gpt-4.1
+ℹ️  🔧 CONFIG: Temperature=0.7, FinishReason=length
+StatusCode                     200
+Success                        True
+Response                       @{data=; metadata=; success=True}
+
+= * 80
+ 🧠 TESTING ANTHROPIC PROVIDER
+= * 80
+
+- * 60
+ Anthropic - Basic Generation
+- * 60
+📤 REQUEST: URL: http://localhost:4000/api/llm/generate
+📤 REQUEST: METHOD: POST
+📤 REQUEST: BODY:
+{
+  "model": "claude-sonnet-4-20250514",
+  "prompt": "Hello, world!",
+  "options": {
+    "temperature": 0.7,
+    "max_tokens": 50
+  }
+}
+
+ℹ️  🚀 Sending request...
+📥 RESPONSE: STATUS: 200
+📥 RESPONSE: HEADERS: Content-Type=application/json; charset=utf-8, Length=616
+📥 RESPONSE: BODY:
+{
+  "data": {
+    "generationId": "req_92a1b09c0259f9ac",
+    "content": "Hello! It's nice to meet you. How are you doing today? Is there anything I can help you with or would you like to chat about?"
+  },
+  "metadata": {
+    "request": {
+      "timestamp": "2025-07-23T03:59:54.961Z",
+      "attemptNumber": 1,
+      "retryCount": 0
+    },
+    "config": {
+      "temperature": 0.7,
+      "finishReason": "end_turn",
+      "adjustmentReason": "Provider minimum tokens for reliable generation",
+      "providerAdjusted": 75,
+      "userRequested": 50
+    },
+    "tokens": {
+      "input": 11,
+      "output": 34,
+      "total": 45,
+      "maxRequested": 75
+    },
+    "provider": "anthropic",
+    "timing": {
+      "responseMs": 1770
+    },
+    "model": "claude-sonnet-4-20250514"
+  },
+  "success": true
+}
+
+✅ ✨ Anthropic - Basic Generation - PASSED ✨
+ℹ️  📝 CONTENT: 'Hello! It's nice to meet you. How are you doing today? Is there anything I can help you with or woul...'
+ℹ️  📏 CONTENT LENGTH: 125 characters
+ℹ️  🎯 TOKENS: Input=11, Output=34, Total=45, MaxRequested=75
+ℹ️  ⏱️  TIMING: 1770ms
+ℹ️  🤖 PROVIDER: anthropic / MODEL: claude-sonnet-4-20250514
+ℹ️  🔧 CONFIG: Temperature=0.7, FinishReason=end_turn
+⚠️  ⚙️  TOKEN ADJUSTMENT: 50 → 75 (Provider minimum tokens for reliable generation)
+StatusCode                     200
+Success                        True
+Response                       @{data=; metadata=; success=True}
+
+- * 60
+ Anthropic - Prompt Polishing
+- * 60
+📤 REQUEST: URL: http://localhost:4000/api/llm/generate
+📤 REQUEST: METHOD: POST
+📤 REQUEST: BODY:
+{
+  "model": "claude-sonnet-4-20250514",
+  "prompt": "Polish this: Medieval monk character",
+  "options": {
+    "temperature": 0.6,
+    "max_tokens": 75
+  }
+}
+
+ℹ️  🚀 Sending request...
+📥 RESPONSE: STATUS: 200
+📥 RESPONSE: HEADERS: Content-Type=application/json; charset=utf-8, Length=732
+📥 RESPONSE: BODY:
+{
+  "data": {
+    "generationId": "req_893b5bce13f08ee6",
+    "content": "Here are several polished versions of a medieval monk character, depending on your needs:\n\n## Brother Aldric the Illuminator\n\n**Background:** A scholarly Benedictine monk in his 40s who serves as the abbey's head scribe and illuminator. Once the youngest son of a minor noble family, he joined the monastery after a profound spiritual experience"
+  },
+  "metadata": {
+    "request": {
+      "timestamp": "2025-07-23T04:00:00.35Z",
+      "attemptNumber": 1,
+      "retryCount": 0
+    },
+    "config": {
+      "temperature": 0.6,
+      "finishReason": "max_tokens"
+    },
+    "tokens": {
+      "input": 13,
+      "output": 75,
+      "total": 88,
+      "maxRequested": 75
+    },
+    "provider": "anthropic",
+    "timing": {
+      "responseMs": 3303
+    },
+    "model": "claude-sonnet-4-20250514"
+  },
+  "success": true
+}
+
+✅ ✨ Anthropic - Prompt Polishing - PASSED ✨
+ℹ️  📝 CONTENT: 'Here are several polished versions of a medieval monk character, depending on your needs:
+
+## Brothe...'
+ℹ️  📏 CONTENT LENGTH: 345 characters
+ℹ️  🎯 TOKENS: Input=13, Output=75, Total=88, MaxRequested=75
+ℹ️  ⏱️  TIMING: 3303ms
+ℹ️  🤖 PROVIDER: anthropic / MODEL: claude-sonnet-4-20250514
+ℹ️  🔧 CONFIG: Temperature=0.6, FinishReason=max_tokens
+StatusCode                     200
+Success                        True
+Response                       @{data=; metadata=; success=True}
+
+= * 80
+ 💎 TESTING GEMINI PROVIDER
+= * 80
+
+- * 60
+ Gemini - Basic Generation
+- * 60
+📤 REQUEST: URL: http://localhost:4000/api/llm/generate
+📤 REQUEST: METHOD: POST
+📤 REQUEST: BODY:
+{
+  "model": "gemini-2.5-pro",
+  "prompt": "Hello, world!",
+  "options": {
+    "temperature": 0.7,
+    "max_tokens": 100
+  }
+}
+
+ℹ️  🚀 Sending request...
+📥 RESPONSE: STATUS: 200
+📥 RESPONSE: HEADERS: Content-Type=application/json; charset=utf-8, Length=465
+📥 RESPONSE: BODY:
+{
+  "data": {
+    "generationId": "req_2a9f4f9d582e94a4",
+    "content": "[Unable to generate content within token limit - please increase max_tokens or simplify prompt]"
+  },
+  "metadata": {
+    "request": {
+      "timestamp": "2025-07-23T04:00:05.727Z",
+      "attemptNumber": 1,
+      "retryCount": 0
+    },
+    "config": {
+      "temperature": 0.7,
+      "finishReason": "MAX_TOKENS"
+    },
+    "tokens": {
+      "input": 4,
+      "output": 0,
+      "total": 103,
+      "maxRequested": 100
+    },
+    "provider": "gemini",
+    "timing": {
+      "responseMs": 3286
+    },
+    "model": "gemini-2.5-pro"
+  },
+  "success": true
+}
+
+✅ ✨ Gemini - Basic Generation - PASSED ✨
+ℹ️  📝 CONTENT: '[Unable to generate content within token limit - please increase max_tokens or simplify prompt]'
+ℹ️  📏 CONTENT LENGTH: 95 characters
+ℹ️  🎯 TOKENS: Input=4, Output=0, Total=103, MaxRequested=100
+ℹ️  ⏱️  TIMING: 3286ms
+ℹ️  🤖 PROVIDER: gemini / MODEL: gemini-2.5-pro
+ℹ️  🔧 CONFIG: Temperature=0.7, FinishReason=MAX_TOKENS
+StatusCode                     200
+Success                        True
+Response                       @{data=; metadata=; success=True}
+
+- * 60
+ Gemini - Prompt Polishing
+- * 60
+📤 REQUEST: URL: http://localhost:4000/api/llm/generate
+📤 REQUEST: METHOD: POST
+📤 REQUEST: BODY:
+{
+  "model": "gemini-2.5-pro",
+  "prompt": "Polish this prompt: Medieval monk",
+  "options": {
+    "temperature": 0.7,
+    "max_tokens": 150
+  }
+}
+
+ℹ️  🚀 Sending request...
+📥 RESPONSE: STATUS: 200
+📥 RESPONSE: HEADERS: Content-Type=application/json; charset=utf-8, Length=465
+📥 RESPONSE: BODY:
+{
+  "data": {
+    "generationId": "req_c6bbcc88dde4715c",
+    "content": "[Unable to generate content within token limit - please increase max_tokens or simplify prompt]"
+  },
+  "metadata": {
+    "request": {
+      "timestamp": "2025-07-23T04:00:11.02Z",
+      "attemptNumber": 1,
+      "retryCount": 0
+    },
+    "config": {
+      "temperature": 0.7,
+      "finishReason": "MAX_TOKENS"
+    },
+    "tokens": {
+      "input": 6,
+      "output": 0,
+      "total": 155,
+      "maxRequested": 150
+    },
+    "provider": "gemini",
+    "timing": {
+      "responseMs": 3171
+    },
+    "model": "gemini-2.5-pro"
+  },
+  "success": true
+}
+
+✅ ✨ Gemini - Prompt Polishing - PASSED ✨
+ℹ️  📝 CONTENT: '[Unable to generate content within token limit - please increase max_tokens or simplify prompt]'
+ℹ️  📏 CONTENT LENGTH: 95 characters
+ℹ️  🎯 TOKENS: Input=6, Output=0, Total=155, MaxRequested=150
+ℹ️  ⏱️  TIMING: 3171ms
+ℹ️  🤖 PROVIDER: gemini / MODEL: gemini-2.5-pro
+ℹ️  🔧 CONFIG: Temperature=0.7, FinishReason=MAX_TOKENS
+StatusCode                     200
+Success                        True
+Response                       @{data=; metadata=; success=True}
+
+- * 60
+ Gemini - Very Low Tokens (Edge Case)
+- * 60
+📤 REQUEST: URL: http://localhost:4000/api/llm/generate
+📤 REQUEST: METHOD: POST
+📤 REQUEST: BODY:
+{
+  "model": "gemini-2.5-pro",
+  "prompt": "Brief response",
+  "options": {
+    "temperature": 0.7,
+    "max_tokens": 20
+  }
+}
+
+ℹ️  🚀 Sending request...
+📥 RESPONSE: STATUS: 200
+📥 RESPONSE: HEADERS: Content-Type=application/json; charset=utf-8, Length=576
+📥 RESPONSE: BODY:
+{
+  "data": {
+    "generationId": "req_eda70db9f5f5fc10",
+    "content": "[Unable to generate content within token limit - please increase max_tokens or simplify prompt]"
+  },
+  "metadata": {
+    "request": {
+      "timestamp": "2025-07-23T04:00:15.867Z",
+      "attemptNumber": 1,
+      "retryCount": 0
+    },
+    "config": {
+      "temperature": 0.7,
+      "finishReason": "MAX_TOKENS",
+      "adjustmentReason": "Provider minimum tokens for reliable generation",
+      "providerAdjusted": 100,
+      "userRequested": 20
+    },
+    "tokens": {
+      "input": 2,
+      "output": 0,
+      "total": 101,
+      "maxRequested": 100
+    },
+    "provider": "gemini",
+    "timing": {
+      "responseMs": 2757
+    },
+    "model": "gemini-2.5-pro"
+  },
+  "success": true
+}
+
+✅ ✨ Gemini - Very Low Tokens (Edge Case) - PASSED ✨
+ℹ️  📝 CONTENT: '[Unable to generate content within token limit - please increase max_tokens or simplify prompt]'
+ℹ️  📏 CONTENT LENGTH: 95 characters
+ℹ️  🎯 TOKENS: Input=2, Output=0, Total=101, MaxRequested=100
+ℹ️  ⏱️  TIMING: 2757ms
+ℹ️  🤖 PROVIDER: gemini / MODEL: gemini-2.5-pro
+ℹ️  🔧 CONFIG: Temperature=0.7, FinishReason=MAX_TOKENS
+⚠️  ⚙️  TOKEN ADJUSTMENT: 20 → 100 (Provider minimum tokens for reliable generation)
+StatusCode                     200
+Success                        True
+Response                       @{data=; metadata=; success=True}
+
+= * 80
+ 💥 TESTING ERROR HANDLING (EXPECTING 400s)
+= * 80
+
+- * 60
+ Invalid Model Test
+- * 60
+📤 REQUEST: URL: http://localhost:4000/api/llm/generate
+📤 REQUEST: METHOD: POST
+📤 REQUEST: BODY:
+{
+  "model": "invalid-model-name",
+  "prompt": "Test",
+  "options": {}
+}
+
+ℹ️  🚀 Sending request...
+❌ 💥 Invalid Model Test - EXCEPTION: Response status code does not indicate success: 400 (Bad Request).
+Could not parse error response
+Error                          Response status code does not indicate success: 400 (Bad Request).
+Success                        False
+
+- * 60
+ Missing Prompt Test
+- * 60
+📤 REQUEST: URL: http://localhost:4000/api/llm/generate
+📤 REQUEST: METHOD: POST
+📤 REQUEST: BODY:
+{
+  "model": "gpt-4.1"
+}
+
+ℹ️  🚀 Sending request...
+❌ 💥 Missing Prompt Test - EXCEPTION: Response status code does not indicate success: 400 (Bad Request).
+Could not parse error response
+Error                          Response status code does not indicate success: 400 (Bad Request).
+Success                        False
+
+- * 60
+ Missing Model Test
+- * 60
+📤 REQUEST: URL: http://localhost:4000/api/llm/generate
+📤 REQUEST: METHOD: POST
+📤 REQUEST: BODY:
+{
+  "prompt": "test"
+}
+
+ℹ️  🚀 Sending request...
+❌ 💥 Missing Model Test - EXCEPTION: Response status code does not indicate success: 400 (Bad Request).
+Could not parse error response
+Error                          Response status code does not indicate success: 400 (Bad Request).
+Success                        False
+
+= * 80
+ 🔧 TESTING SMART TOKEN ALLOCATION
+= * 80
+ℹ️  Testing provider-specific token minimums...
+
+- * 60
+ Gemini - Token Adjustment Verification
+- * 60
+📤 REQUEST: URL: http://localhost:4000/api/llm/generate
+📤 REQUEST: METHOD: POST
+📤 REQUEST: BODY:
+{
+  "model": "gemini-2.5-pro",
+  "prompt": "Short prompt",
+  "options": {
+    "max_tokens": 30
+  }
+}
+
+ℹ️  🚀 Sending request...
+📥 RESPONSE: STATUS: 200
+📥 RESPONSE: HEADERS: Content-Type=application/json; charset=utf-8, Length=576
+📥 RESPONSE: BODY:
+{
+  "data": {
+    "generationId": "req_305fd65d023189b0",
+    "content": "[Unable to generate content within token limit - please increase max_tokens or simplify prompt]"
+  },
+  "metadata": {
+    "request": {
+      "timestamp": "2025-07-23T04:00:29.446Z",
+      "attemptNumber": 1,
+      "retryCount": 0
+    },
+    "config": {
+      "temperature": 0.7,
+      "finishReason": "MAX_TOKENS",
+      "adjustmentReason": "Provider minimum tokens for reliable generation",
+      "providerAdjusted": 100,
+      "userRequested": 30
+    },
+    "tokens": {
+      "input": 2,
+      "output": 0,
+      "total": 101,
+      "maxRequested": 100
+    },
+    "provider": "gemini",
+    "timing": {
+      "responseMs": 2128
+    },
+    "model": "gemini-2.5-pro"
+  },
+  "success": true
+}
+
+✅ ✨ Gemini - Token Adjustment Verification - PASSED ✨
+ℹ️  📝 CONTENT: '[Unable to generate content within token limit - please increase max_tokens or simplify prompt]'
+ℹ️  📏 CONTENT LENGTH: 95 characters
+ℹ️  🎯 TOKENS: Input=2, Output=0, Total=101, MaxRequested=100
+ℹ️  ⏱️  TIMING: 2128ms
+ℹ️  🤖 PROVIDER: gemini / MODEL: gemini-2.5-pro
+ℹ️  🔧 CONFIG: Temperature=0.7, FinishReason=MAX_TOKENS
+⚠️  ⚙️  TOKEN ADJUSTMENT: 30 → 100 (Provider minimum tokens for reliable generation)
+✅ 🎯 SMART TOKEN ALLOCATION WORKING PERFECTLY!
+ℹ️  User requested: 30 tokens
+ℹ️  Provider used: 100 tokens
+ℹ️  Reason: Provider minimum tokens for reliable generation
+
+= * 80
+ 📐 VALIDATING RESPONSE STRUCTURE
+= * 80
+
+- * 60
+ Response Structure Validation
+- * 60
+📤 REQUEST: URL: http://localhost:4000/api/llm/generate
+📤 REQUEST: METHOD: POST
+📤 REQUEST: BODY:
+{
+  "model": "gpt-4.1",
+  "prompt": "Test structure",
+  "options": {
+    "max_tokens": 50
+  }
+}
+
+ℹ️  🚀 Sending request...
+📥 RESPONSE: STATUS: 200
+📥 RESPONSE: HEADERS: Content-Type=application/json; charset=utf-8, Length=587
+📥 RESPONSE: BODY:
+{
+  "data": {
+    "generationId": "req_fead3aa72094549e",
+    "content": "Certainly! \"Test structure\" can refer to different contexts. Here are a few common interpretations:\n\n---\n\n### 1. **General Test Structure (Exams/Assessments):**\nA typical test or exam is structured as follows:\n\n- **Title/"
+  },
+  "metadata": {
+    "request": {
+      "timestamp": "2025-07-23T04:00:32.528Z",
+      "attemptNumber": 1,
+      "retryCount": 0
+    },
+    "config": {
+      "temperature": 0.7,
+      "finishReason": "length"
+    },
+    "tokens": {
+      "input": 9,
+      "output": 50,
+      "total": 59,
+      "maxRequested": 50
+    },
+    "provider": "openai",
+    "timing": {
+      "responseMs": 960
+    },
+    "model": "gpt-4.1"
+  },
+  "success": true
+}
+
+✅ ✨ Response Structure Validation - PASSED ✨
+ℹ️  📝 CONTENT: 'Certainly! "Test structure" can refer to different contexts. Here are a few common interpretations:
+...'
+ℹ️  📏 CONTENT LENGTH: 221 characters
+ℹ️  🎯 TOKENS: Input=9, Output=50, Total=59, MaxRequested=50
+ℹ️  ⏱️  TIMING: 960ms
+ℹ️  🤖 PROVIDER: openai / MODEL: gpt-4.1
+ℹ️  🔧 CONFIG: Temperature=0.7, FinishReason=length
+ℹ️  Checking top-level fields: success, data, metadata
+✅ ✅ Found field: success
+✅ ✅ Found field: data
+✅ ✅ Found field: metadata
+ℹ️  Checking data fields: content, generationId
+✅ ✅ Found data field: content
+✅ ✅ Found data field: generationId
+ℹ️  Checking metadata fields: model, provider, tokens, config, timing
+✅ ✅ Found metadata field: model
+✅ ✅ Found metadata field: provider
+✅ ✅ Found metadata field: tokens
+✅ ✅ Found metadata field: config
+✅ ✅ Found metadata field: timing
+✅ 🎉 RESPONSE STRUCTURE VALIDATION PASSED!
+
+= * 80
+ 🔥 PSYCHO MODE TEST RESULTS SUMMARY 🔥
+= * 80
+
+📊 TOTAL TESTS RUN: 15
+✅ 🎉 PASSED: 12
+❌ 💥 FAILED: 3
+📈 SUCCESS RATE: 80%
+
+⚠️  ⚠️  Some tests failed. Review the detailed output above.
+ℹ️  🔧 Common issues:
+  - Ensure Phoenix server is running (mix phx.server)
+  - Check API keys are configured in .env file
+  - Verify database is running and migrated
+
+ℹ️  🔥 PSYCHO MODE OPTIONS:
+ℹ️  Normal mode (less verbose): .\unifiedAiApi.ps1 -Quiet
+ℹ️  Skip models test: .\unifiedAiApi.ps1 -SkipModelsTest
+ℹ️  Test production: .\unifiedAiApi.ps1 -BaseUrl 'https://ra-backend.fly.dev'
+

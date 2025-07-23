@@ -18,22 +18,25 @@ defmodule RaBackend.LLM.Providers.Anthropic do
         {"anthropic-version", "2023-06-01"}
       ]
 
-      # Apply defaults and capture what's actually used
-      max_tokens = Map.get(options, "max_tokens", 2000)
+      # Smart token allocation - ensure consistent behavior with other providers
+      user_max_tokens = Map.get(options, "max_tokens")
+      smart_max_tokens = ProviderHelper.calculate_smart_tokens(prompt, :anthropic, user_max_tokens)
       temperature = Map.get(options, "temperature", 0.7)
 
       applied_config = %{
-        max_tokens: max_tokens,
-        temperature: temperature
+        max_tokens: smart_max_tokens,
+        temperature: temperature,
+        user_requested: user_max_tokens,
+        provider_adjusted: smart_max_tokens != user_max_tokens
       }
 
       body = Jason.encode!(%{
         model: model,
-        max_tokens: max_tokens,
+        max_tokens: smart_max_tokens,
         messages: [%{role: "user", content: prompt}]
       })
 
-      Logger.debug("Anthropic request: model=#{model}, max_tokens=#{max_tokens}")
+      Logger.debug("Anthropic request: model=#{model}, max_tokens=#{smart_max_tokens}")
 
       provider_start = System.monotonic_time(:millisecond)
 

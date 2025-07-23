@@ -29,6 +29,20 @@ defmodule RaBackendWeb.LLMController do
     end
   end
 
+  def generate(conn, params) do
+    cond do
+      is_nil(params["model"]) ->
+        handle_missing_param(conn, "model")
+      is_nil(params["prompt"]) ->
+        handle_missing_param(conn, "prompt")
+      true ->
+        # Fallback for other unexpected cases
+        conn
+        |> put_status(:bad_request)
+        |> json(%{success: false, error: %{code: "bad_request", message: "Invalid request structure."}})
+    end
+  end
+
   def list_models(conn, _params) do
     models = ModelRegistry.all_for_api()
 
@@ -42,6 +56,17 @@ defmodule RaBackendWeb.LLMController do
         timestamp: DateTime.utc_now()
       }
     })
+  end
+
+  defp handle_missing_param(conn, missing_param) do
+    error_details = %{
+      reason: :validation_error,
+      message: "Missing required parameter: #{missing_param}"
+    }
+
+    conn
+    |> put_status(:bad_request)
+    |> json(build_error_response(error_details, %Request{model: nil, prompt: nil}))
   end
 
   # Private helper functions for building responses
@@ -97,10 +122,24 @@ defmodule RaBackendWeb.LLMController do
   defp build_config_metadata(response) do
     config = response.applied_config || %{}
 
-    %{
+    base_config = %{
       temperature: Map.get(config, :temperature),
       finishReason: response.finish_reason
     }
+
+    # Add token adjustment information if provider modified user request
+    token_info = if Map.get(config, :provider_adjusted) do
+      %{
+        userRequested: Map.get(config, :user_requested),
+        providerAdjusted: Map.get(config, :max_tokens),
+        adjustmentReason: "Provider minimum tokens for reliable generation"
+      }
+    else
+      %{}
+    end
+
+    base_config
+    |> Map.merge(token_info)
     |> Enum.reject(fn {_k, v} -> is_nil(v) end)
     |> Enum.into(%{})
   end
@@ -134,9 +173,24 @@ defmodule RaBackendWeb.LLMController do
           requestedModel: request.model,
           availableModels: Enum.map(ModelRegistry.all_for_api(), & &1.model)
         }
+      reason when is_binary(reason) ->
+        %{
+          providerError: reason,
+          requestedModel: request.model,
+          generationId: Map.get(error_details, :generation_id)
+        }
       _ ->
-        %{}
+        %{
+          requestedModel: request.model,
+          generationId: Map.get(error_details, :generation_id)
+        }
     end
+  end
+  defp build_error_details(reason, request) when is_binary(reason) do
+    %{
+      providerError: reason,
+      requestedModel: request.model
+    }
   end
   defp build_error_details(_, _), do: %{}
 
