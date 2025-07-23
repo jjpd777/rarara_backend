@@ -62,8 +62,8 @@ defmodule RaBackend.LLM.Providers.Gemini do
         ]
       })
 
-      # Fix model resolution and use v1 API
-      url = "https://generativelanguage.googleapis.com/v1/models/#{model}:generateContent?key=#{config[:api_key]}"
+      # Fix model resolution and use v1beta API
+      url = "https://generativelanguage.googleapis.com/v1beta/models/#{model}:generateContent?key=#{config[:api_key]}"
 
       Logger.debug("Gemini request: model=#{model}, max_tokens=#{smart_max_tokens}, url=#{String.replace(url, config[:api_key] || "", "***")}")
 

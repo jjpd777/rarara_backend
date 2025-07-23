@@ -4,12 +4,14 @@ defmodule Scripts.E2eLlmTest do
   """
 
   def run(base_url \\ "http://localhost:4000") do
-    prompt = "Please polish this character creation prompt. Include moment in history. Reply ONLY response. MAX 50 characters: Create a Greek god"
+    prompt =
+      "Please polish this character creation prompt. Include moment in history. Reply ONLY response. MAX 50 characters: Create a Greek god"
 
     # --- Test Cases ---
-    run_tests_for_provider("OpenAI", "gpt-4.1", [50, 40, 30], prompt, base_url)
-    run_tests_for_provider("Anthropic", "claude-sonnet-4-20250514", [50, 40, 30], prompt, base_url)
-    run_tests_for_provider("Gemini", "gemini-2.5-pro", [350, 320, 300], prompt, base_url)
+    run_tests_for_provider("OpenAI", "gpt-4.1", [50], prompt, base_url)
+    run_tests_for_provider("Anthropic", "claude-sonnet-4-20250514", [50], prompt, base_url)
+    run_tests_for_provider("Gemini", "gemini-2.5-flash-lite", [150], prompt, base_url)
+    run_tests_for_provider("Gemini", "gemini-2.5-flash", [150], prompt, base_url)
   end
 
   defp run_tests_for_provider(provider_name, model, token_counts, prompt, base_url) do

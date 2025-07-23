@@ -23,22 +23,15 @@ defmodule RaBackend.LLM.ModelRegistry do
     },
     %{
       house: "Google",
-      model: "gemini-2.5-pro",
+      model: "gemini-2.5-flash-lite",
+      display_name: "Google - Gemini 2.5 Flash Lite",
+      provider: Providers.Gemini,
+      model_type: :text_gen
+    },
+    %{
+      house: "Google",
+      model: "gemini-2.5-flash",
       display_name: "Google - Gemini 2.5 Flash",
-      provider: Providers.Gemini,
-      model_type: :text_gen
-    },
-    %{
-      house: "Google",
-      model: "gemini-2.5",
-      display_name: "Google - Gemini 2.5",
-      provider: Providers.Gemini,
-      model_type: :text_gen
-    },
-    %{
-      house: "Google",
-      model: "gemini-2.5-pro",
-      display_name: "Google - Gemini 2.5 Pro",
       provider: Providers.Gemini,
       model_type: :text_gen
     }
