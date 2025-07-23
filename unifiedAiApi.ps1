@@ -216,6 +216,8 @@ Write-Header "🔥🔥🔥 PSYCHO MODE LLM API TESTING SUITE 🔥🔥🔥"
 Write-Warning "PSYCHO MODE ENABLED - SHOWING EVERY REQUEST AND RESPONSE!"
 Write-Info "Base URL: $BaseUrl"
 
+$PolishingPrompt = "Please polish this prompt. Make it nicer. Mention time & geography in history. Reply ONLY response. MAX 50 characters: Medieval monk"
+
 # Test 1: Models List Endpoint
 if (-not $SkipModelsTest) {
     Write-Header "📋 TESTING MODELS LIST ENDPOINT"
@@ -233,45 +235,45 @@ if (-not $SkipModelsTest) {
 # Test 2: OpenAI Provider Tests
 Write-Header "🤖 TESTING OPENAI PROVIDER"
 
-Test-GenerationEndpoint -TestName "OpenAI - Basic Generation" -Model "gpt-4.1" -Prompt "Hello, world!" -Options @{max_tokens=50; temperature=0.7}
+Test-GenerationEndpoint -TestName "OpenAI - Basic Generation" -Model "gpt-4.1" -Prompt $PolishingPrompt -Options @{max_tokens=50; temperature=0.7}
 
-Test-GenerationEndpoint -TestName "OpenAI - Prompt Polishing (YOUR USE CASE)" -Model "gpt-4.1" -Prompt "Improve this character creation prompt. Output only the polished prompt: Medieval monk" -Options @{max_tokens=50; temperature=0.7}
+Test-GenerationEndpoint -TestName "OpenAI - Prompt Polishing (YOUR USE CASE)" -Model "gpt-4.1" -Prompt $PolishingPrompt -Options @{max_tokens=50; temperature=0.7}
 
-Test-GenerationEndpoint -TestName "OpenAI - Low Token Limit Stress Test" -Model "gpt-4.1" -Prompt "Brief response please" -Options @{max_tokens=20; temperature=0.5}
+Test-GenerationEndpoint -TestName "OpenAI - Low Token Limit Stress Test" -Model "gpt-4.1" -Prompt $PolishingPrompt -Options @{max_tokens=20; temperature=0.5}
 
-Test-GenerationEndpoint -TestName "OpenAI - No Options (Default Behavior)" -Model "gpt-4.1" -Prompt "Test without options"
+Test-GenerationEndpoint -TestName "OpenAI - No Options (Default Behavior)" -Model "gpt-4.1" -Prompt $PolishingPrompt
 
 # Test 3: Anthropic Provider Tests  
 Write-Header "🧠 TESTING ANTHROPIC PROVIDER"
 
-Test-GenerationEndpoint -TestName "Anthropic - Basic Generation" -Model "claude-sonnet-4-20250514" -Prompt "Hello, world!" -Options @{max_tokens=50; temperature=0.7}
+Test-GenerationEndpoint -TestName "Anthropic - Basic Generation" -Model "claude-sonnet-4-20250514" -Prompt $PolishingPrompt -Options @{max_tokens=50; temperature=0.7}
 
-Test-GenerationEndpoint -TestName "Anthropic - Prompt Polishing" -Model "claude-sonnet-4-20250514" -Prompt "Polish this: Medieval monk character" -Options @{max_tokens=75; temperature=0.6}
+Test-GenerationEndpoint -TestName "Anthropic - Prompt Polishing" -Model "claude-sonnet-4-20250514" -Prompt $PolishingPrompt -Options @{max_tokens=75; temperature=0.6}
 
 # Test 4: Gemini Provider Tests
 Write-Header "💎 TESTING GEMINI PROVIDER"
 
-Test-GenerationEndpoint -TestName "Gemini - Basic Generation" -Model "gemini-2.5-pro" -Prompt "Hello, world!" -Options @{max_tokens=300; temperature=0.7}
+Test-GenerationEndpoint -TestName "Gemini - Basic Generation" -Model "gemini-2.5-pro" -Prompt $PolishingPrompt -Options @{max_tokens=400; temperature=0.7}
 
-Test-GenerationEndpoint -TestName "Gemini - Prompt Polishing" -Model "gemini-2.5-pro" -Prompt "Polish this prompt: Medieval monk" -Options @{max_tokens=300; temperature=0.7}
+Test-GenerationEndpoint -TestName "Gemini - Prompt Polishing" -Model "gemini-2.5-pro" -Prompt $PolishingPrompt -Options @{max_tokens=400; temperature=0.7}
 
-Test-GenerationEndpoint -TestName "Gemini - Very Low Tokens (Edge Case)" -Model "gemini-2.5-pro" -Prompt "Brief response" -Options @{max_tokens=20; temperature=0.7}
+Test-GenerationEndpoint -TestName "Gemini - Very Low Tokens (Edge Case)" -Model "gemini-2.5-pro" -Prompt $PolishingPrompt -Options @{max_tokens=20; temperature=0.7}
 
 # Test 5: Error Handling Tests
 Write-Header "💥 TESTING ERROR HANDLING (EXPECTING 400s)"
 
-Test-GenerationEndpoint -TestName "Invalid Model Test" -Model "invalid-model-name" -Prompt "Test" -ExpectedStatus 400
+Test-GenerationEndpoint -TestName "Invalid Model Test" -Model "invalid-model-name" -Prompt $PolishingPrompt -ExpectedStatus 400
 
 Test-ApiEndpoint -TestName "Missing Prompt Test" -Endpoint "/api/llm/generate" -Body @{model="gpt-4.1"} -ExpectedStatus 400
 
-Test-ApiEndpoint -TestName "Missing Model Test" -Endpoint "/api/llm/generate" -Body @{prompt="test"} -ExpectedStatus 400
+Test-ApiEndpoint -TestName "Missing Model Test" -Endpoint "/api/llm/generate" -Body @{prompt=$PolishingPrompt} -ExpectedStatus 400
 
 # Test 6: Token Adjustment Verification
 Write-Header "🔧 TESTING SMART TOKEN ALLOCATION"
 
 Write-Info "Testing provider-specific token minimums..."
 
-$geminiLowTokenResult = Test-GenerationEndpoint -TestName "Gemini - Token Adjustment Verification" -Model "gemini-2.5-pro" -Prompt "Short prompt" -Options @{max_tokens=30}
+$geminiLowTokenResult = Test-GenerationEndpoint -TestName "Gemini - Token Adjustment Verification" -Model "gemini-2.5-pro" -Prompt $PolishingPrompt -Options @{max_tokens=30}
 
 if ($geminiLowTokenResult.Success) {
     $config = $geminiLowTokenResult.Response.metadata.config
@@ -286,7 +288,7 @@ if ($geminiLowTokenResult.Success) {
 # Test 7: Response Structure Validation
 Write-Header "📐 VALIDATING RESPONSE STRUCTURE"
 
-$structureTest = Test-GenerationEndpoint -TestName "Response Structure Validation" -Model "gpt-4.1" -Prompt "Test structure" -Options @{max_tokens=50}
+$structureTest = Test-GenerationEndpoint -TestName "Response Structure Validation" -Model "gpt-4.1" -Prompt $PolishingPrompt -Options @{max_tokens=50}
 
 if ($structureTest.Success) {
     $response = $structureTest.Response

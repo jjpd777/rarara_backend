@@ -1,0 +1,550 @@
+
+= * 80
+ 🔥🔥🔥 PSYCHO MODE LLM API TESTING SUITE 🔥🔥🔥
+= * 80
+⚠️  PSYCHO MODE ENABLED - SHOWING EVERY REQUEST AND RESPONSE!
+ℹ️  Base URL: http://localhost:4000
+
+= * 80
+ 📋 TESTING MODELS LIST ENDPOINT
+= * 80
+
+- * 60
+ List Available Models
+- * 60
+📤 REQUEST: URL: http://localhost:4000/api/llm/models
+📤 REQUEST: METHOD: GET
+📤 REQUEST: BODY: (empty)
+
+ℹ️  🚀 Sending request...
+📥 RESPONSE: STATUS: 200
+📥 RESPONSE: HEADERS: Content-Type=application/json; charset=utf-8, Length=648
+📥 RESPONSE: BODY:
+{
+  "data": {
+    "models": [
+      {
+        "model": "gpt-4.1",
+        "display_name": "OpenAI - GPT-4.1",
+        "house": "OpenAI",
+        "model_type": "text_gen"
+      },
+      {
+        "model": "claude-sonnet-4-20250514",
+        "display_name": "Anthropic - Claude Sonnet 4",
+        "house": "Anthropic",
+        "model_type": "text_gen"
+      },
+      {
+        "model": "gemini-2.5-pro",
+        "display_name": "Google - Gemini 2.5 Flash",
+        "house": "Google",
+        "model_type": "text_gen"
+      },
+      {
+        "model": "gemini-2.5",
+        "display_name": "Google - Gemini 2.5",
+        "house": "Google",
+        "model_type": "text_gen"
+      },
+      {
+        "model": "gemini-2.5-pro",
+        "display_name": "Google - Gemini 2.5 Pro",
+        "house": "Google",
+        "model_type": "text_gen"
+      }
+    ]
+  },
+  "metadata": {
+    "timestamp": "2025-07-23T04:33:44.102Z",
+    "totalCount": 5
+  },
+  "success": true
+}
+
+✅ ✨ List Available Models - PASSED ✨
+✅ Found 5 available models:
+  🤖 gpt-4.1 (OpenAI) - OpenAI - GPT-4.1
+  🤖 claude-sonnet-4-20250514 (Anthropic) - Anthropic - Claude Sonnet 4
+  🤖 gemini-2.5-pro (Google) - Google - Gemini 2.5 Flash
+  🤖 gemini-2.5 (Google) - Google - Gemini 2.5
+  🤖 gemini-2.5-pro (Google) - Google - Gemini 2.5 Pro
+
+= * 80
+ 🤖 TESTING OPENAI PROVIDER
+= * 80
+
+- * 60
+ OpenAI - Basic Generation
+- * 60
+📤 REQUEST: URL: http://localhost:4000/api/llm/generate
+📤 REQUEST: METHOD: POST
+📤 REQUEST: BODY:
+{
+  "model": "gpt-4.1",
+  "prompt": "Please polish this prompt. Make it nicer. Mention time & geography in history. Reply ONLY response. MAX 50 characters: Medieval monk",
+  "options": {
+    "temperature": 0.7,
+    "max_tokens": 50
+  }
+}
+
+ℹ️  🚀 Sending request...
+📥 RESPONSE: STATUS: 200
+📥 RESPONSE: HEADERS: Content-Type=application/json; charset=utf-8, Length=392
+📥 RESPONSE: BODY:
+{
+  "data": {
+    "content": "Medieval monk, Europe, 12th century",
+    "generationId": "req_b8176684b411c269"
+  },
+  "metadata": {
+    "request": {
+      "timestamp": "2025-07-23T04:33:47.269Z",
+      "attemptNumber": 1,
+      "retryCount": 0
+    },
+    "config": {
+      "temperature": 0.7,
+      "finishReason": "stop"
+    },
+    "tokens": {
+      "input": 34,
+      "output": 10,
+      "total": 44,
+      "maxRequested": 50
+    },
+    "provider": "openai",
+    "model": "gpt-4.1",
+    "timing": {
+      "responseMs": 1064
+    }
+  },
+  "success": true
+}
+
+✅ ✨ OpenAI - Basic Generation - PASSED ✨
+ℹ️  📝 CONTENT: 'Medieval monk, Europe, 12th century'
+ℹ️  📏 CONTENT LENGTH: 35 characters
+ℹ️  🎯 TOKENS: Input=34, Output=10, Total=44, MaxRequested=50
+ℹ️  ⏱️  TIMING: 1064ms
+ℹ️  🤖 PROVIDER: openai / MODEL: gpt-4.1
+ℹ️  🔧 CONFIG: Temperature=0.7, FinishReason=stop
+
+Name                           Value
+----                           -----
+StatusCode                     200
+Success                        True
+Response                       @{data=; metadata=; success=True}
+
+- * 60
+ OpenAI - Prompt Polishing (YOUR USE CASE)
+- * 60
+📤 REQUEST: URL: http://localhost:4000/api/llm/generate
+📤 REQUEST: METHOD: POST
+📤 REQUEST: BODY:
+{
+  "model": "gpt-4.1",
+  "prompt": "Please polish this prompt. Make it nicer. Mention time & geography in history. Reply ONLY response. MAX 50 characters: Medieval monk",
+  "options": {
+    "temperature": 0.7,
+    "max_tokens": 50
+  }
+}
+
+ℹ️  🚀 Sending request...
+📥 RESPONSE: STATUS: 200
+📥 RESPONSE: HEADERS: Content-Type=application/json; charset=utf-8, Length=391
+📥 RESPONSE: BODY:
+{
+  "data": {
+    "content": "Medieval European monk, 12th century",
+    "generationId": "req_b9513f89b75aab48"
+  },
+  "metadata": {
+    "request": {
+      "timestamp": "2025-07-23T04:33:49.813Z",
+      "attemptNumber": 1,
+      "retryCount": 0
+    },
+    "config": {
+      "temperature": 0.7,
+      "finishReason": "stop"
+    },
+    "tokens": {
+      "input": 34,
+      "output": 9,
+      "total": 43,
+      "maxRequested": 50
+    },
+    "provider": "openai",
+    "model": "gpt-4.1",
+    "timing": {
+      "responseMs": 455
+    }
+  },
+  "success": true
+}
+
+✅ ✨ OpenAI - Prompt Polishing (YOUR USE CASE) - PASSED ✨
+ℹ️  📝 CONTENT: 'Medieval European monk, 12th century'
+ℹ️  📏 CONTENT LENGTH: 36 characters
+ℹ️  🎯 TOKENS: Input=34, Output=9, Total=43, MaxRequested=50
+ℹ️  ⏱️  TIMING: 455ms
+ℹ️  🤖 PROVIDER: openai / MODEL: gpt-4.1
+ℹ️  🔧 CONFIG: Temperature=0.7, FinishReason=stop
+StatusCode                     200
+Success                        True
+Response                       @{data=; metadata=; success=True}
+
+- * 60
+ OpenAI - Low Token Limit Stress Test
+- * 60
+📤 REQUEST: URL: http://localhost:4000/api/llm/generate
+📤 REQUEST: METHOD: POST
+📤 REQUEST: BODY:
+{
+  "model": "gpt-4.1",
+  "prompt": "Please polish this prompt. Make it nicer. Mention time & geography in history. Reply ONLY response. MAX 50 characters: Medieval monk",
+  "options": {
+    "temperature": 0.5,
+    "max_tokens": 20
+  }
+}
+
+ℹ️  🚀 Sending request...
+📥 RESPONSE: STATUS: 200
+📥 RESPONSE: HEADERS: Content-Type=application/json; charset=utf-8, Length=510
+📥 RESPONSE: BODY:
+{
+  "data": {
+    "content": "Medieval monk in 12th-century Western Europe",
+    "generationId": "req_2eb0a66eff77c42a"
+  },
+  "metadata": {
+    "request": {
+      "timestamp": "2025-07-23T04:33:52.51Z",
+      "attemptNumber": 1,
+      "retryCount": 0
+    },
+    "config": {
+      "temperature": 0.5,
+      "finishReason": "stop",
+      "userRequested": 20,
+      "providerAdjusted": 50,
+      "adjustmentReason": "Provider minimum tokens for reliable generation"
+    },
+    "tokens": {
+      "input": 34,
+      "output": 10,
+      "total": 44,
+      "maxRequested": 50
+    },
+    "provider": "openai",
+    "model": "gpt-4.1",
+    "timing": {
+      "responseMs": 626
+    }
+  },
+  "success": true
+}
+
+✅ ✨ OpenAI - Low Token Limit Stress Test - PASSED ✨
+ℹ️  📝 CONTENT: 'Medieval monk in 12th-century Western Europe'
+ℹ️  📏 CONTENT LENGTH: 44 characters
+ℹ️  🎯 TOKENS: Input=34, Output=10, Total=44, MaxRequested=50
+ℹ️  ⏱️  TIMING: 626ms
+ℹ️  🤖 PROVIDER: openai / MODEL: gpt-4.1
+ℹ️  🔧 CONFIG: Temperature=0.5, FinishReason=stop
+⚠️  ⚙️  TOKEN ADJUSTMENT: 20 → 50 (Provider minimum tokens for reliable generation)
+StatusCode                     200
+Success                        True
+Response                       @{data=; metadata=; success=True}
+
+- * 60
+ OpenAI - No Options (Default Behavior)
+- * 60
+📤 REQUEST: URL: http://localhost:4000/api/llm/generate
+📤 REQUEST: METHOD: POST
+📤 REQUEST: BODY:
+{
+  "model": "gpt-4.1",
+  "prompt": "Please polish this prompt. Make it nicer. Mention time & geography in history. Reply ONLY response. MAX 50 characters: Medieval monk",
+  "options": {}
+}
+
+ℹ️  🚀 Sending request...
+📥 RESPONSE: STATUS: 200
+📥 RESPONSE: HEADERS: Content-Type=application/json; charset=utf-8, Length=493
+📥 RESPONSE: BODY:
+{
+  "data": {
+    "content": "Medieval monk in 13th-century Western Europe",
+    "generationId": "req_a41dbd45ba224cf9"
+  },
+  "metadata": {
+    "request": {
+      "timestamp": "2025-07-23T04:33:55.308Z",
+      "attemptNumber": 1,
+      "retryCount": 0
+    },
+    "config": {
+      "temperature": 0.7,
+      "finishReason": "stop",
+      "providerAdjusted": 100,
+      "adjustmentReason": "Provider minimum tokens for reliable generation"
+    },
+    "tokens": {
+      "input": 34,
+      "output": 10,
+      "total": 44,
+      "maxRequested": 100
+    },
+    "provider": "openai",
+    "model": "gpt-4.1",
+    "timing": {
+      "responseMs": 687
+    }
+  },
+  "success": true
+}
+
+✅ ✨ OpenAI - No Options (Default Behavior) - PASSED ✨
+ℹ️  📝 CONTENT: 'Medieval monk in 13th-century Western Europe'
+ℹ️  📏 CONTENT LENGTH: 44 characters
+ℹ️  🎯 TOKENS: Input=34, Output=10, Total=44, MaxRequested=100
+ℹ️  ⏱️  TIMING: 687ms
+ℹ️  🤖 PROVIDER: openai / MODEL: gpt-4.1
+ℹ️  🔧 CONFIG: Temperature=0.7, FinishReason=stop
+StatusCode                     200
+Success                        True
+Response                       @{data=; metadata=; success=True}
+
+= * 80
+ 🧠 TESTING ANTHROPIC PROVIDER
+= * 80
+
+- * 60
+ Anthropic - Basic Generation
+- * 60
+📤 REQUEST: URL: http://localhost:4000/api/llm/generate
+📤 REQUEST: METHOD: POST
+📤 REQUEST: BODY:
+{
+  "model": "claude-sonnet-4-20250514",
+  "prompt": "Please polish this prompt. Make it nicer. Mention time & geography in history. Reply ONLY response. MAX 50 characters: Medieval monk",
+  "options": {
+    "temperature": 0.7,
+    "max_tokens": 50
+  }
+}
+
+ℹ️  🚀 Sending request...
+📥 RESPONSE: STATUS: 200
+📥 RESPONSE: HEADERS: Content-Type=application/json; charset=utf-8, Length=539
+📥 RESPONSE: BODY:
+{
+  "data": {
+    "content": "Medieval European monastery scribe, 12th century",
+    "generationId": "req_9ec2eba4a4c8b1d8"
+  },
+  "metadata": {
+    "request": {
+      "timestamp": "2025-07-23T04:33:59.47Z",
+      "attemptNumber": 1,
+      "retryCount": 0
+    },
+    "config": {
+      "temperature": 0.7,
+      "finishReason": "end_turn",
+      "userRequested": 50,
+      "providerAdjusted": 75,
+      "adjustmentReason": "Provider minimum tokens for reliable generation"
+    },
+    "tokens": {
+      "input": 38,
+      "output": 13,
+      "total": 51,
+      "maxRequested": 75
+    },
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-20250514",
+    "timing": {
+      "responseMs": 2068
+    }
+  },
+  "success": true
+}
+
+✅ ✨ Anthropic - Basic Generation - PASSED ✨
+ℹ️  📝 CONTENT: 'Medieval European monastery scribe, 12th century'
+ℹ️  📏 CONTENT LENGTH: 48 characters
+ℹ️  🎯 TOKENS: Input=38, Output=13, Total=51, MaxRequested=75
+ℹ️  ⏱️  TIMING: 2068ms
+ℹ️  🤖 PROVIDER: anthropic / MODEL: claude-sonnet-4-20250514
+ℹ️  🔧 CONFIG: Temperature=0.7, FinishReason=end_turn
+⚠️  ⚙️  TOKEN ADJUSTMENT: 50 → 75 (Provider minimum tokens for reliable generation)
+StatusCode                     200
+Success                        True
+Response                       @{data=; metadata=; success=True}
+
+- * 60
+ Anthropic - Prompt Polishing
+- * 60
+📤 REQUEST: URL: http://localhost:4000/api/llm/generate
+📤 REQUEST: METHOD: POST
+📤 REQUEST: BODY:
+{
+  "model": "claude-sonnet-4-20250514",
+  "prompt": "Please polish this prompt. Make it nicer. Mention time & geography in history. Reply ONLY response. MAX 50 characters: Medieval monk",
+  "options": {
+    "temperature": 0.6,
+    "max_tokens": 75
+  }
+}
+
+ℹ️  🚀 Sending request...
+📥 RESPONSE: STATUS: 200
+📥 RESPONSE: HEADERS: Content-Type=application/json; charset=utf-8, Length=429
+📥 RESPONSE: BODY:
+{
+  "data": {
+    "content": "Medieval European monastery scribe, 12th century",
+    "generationId": "req_9be3a77650552def"
+  },
+  "metadata": {
+    "request": {
+      "timestamp": "2025-07-23T04:34:03.167Z",
+      "attemptNumber": 1,
+      "retryCount": 0
+    },
+    "config": {
+      "temperature": 0.6,
+      "finishReason": "end_turn"
+    },
+    "tokens": {
+      "input": 38,
+      "output": 13,
+      "total": 51,
+      "maxRequested": 75
+    },
+    "provider": "anthropic",
+    "model": "claude-sonnet-4-20250514",
+    "timing": {
+      "responseMs": 1615
+    }
+  },
+  "success": true
+}
+
+✅ ✨ Anthropic - Prompt Polishing - PASSED ✨
+ℹ️  📝 CONTENT: 'Medieval European monastery scribe, 12th century'
+ℹ️  📏 CONTENT LENGTH: 48 characters
+ℹ️  🎯 TOKENS: Input=38, Output=13, Total=51, MaxRequested=75
+ℹ️  ⏱️  TIMING: 1615ms
+ℹ️  🤖 PROVIDER: anthropic / MODEL: claude-sonnet-4-20250514
+ℹ️  🔧 CONFIG: Temperature=0.6, FinishReason=end_turn
+StatusCode                     200
+Success                        True
+Response                       @{data=; metadata=; success=True}
+
+= * 80
+ 💎 TESTING GEMINI PROVIDER
+= * 80
+
+- * 60
+ Gemini - Basic Generation
+- * 60
+📤 REQUEST: URL: http://localhost:4000/api/llm/generate
+📤 REQUEST: METHOD: POST
+📤 REQUEST: BODY:
+{
+  "model": "gemini-2.5-pro",
+  "prompt": "Please polish this prompt. Make it nicer. Mention time & geography in history. Reply ONLY response. MAX 50 characters: Medieval monk",
+  "options": {
+    "temperature": 0.7,
+    "max_tokens": 8192
+  }
+}
+
+ℹ️  🚀 Sending request...
+❌ 💥 Gemini - Basic Generation - EXCEPTION: Response status code does not indicate success: 500 (Internal Server Error).
+Error                          Response status code does not indicate success: 500 (Internal Server Error).
+Success                        False
+
+- * 60
+ Gemini - Prompt Polishing
+- * 60
+📤 REQUEST: URL: http://localhost:4000/api/llm/generate
+📤 REQUEST: METHOD: POST
+📤 REQUEST: BODY:
+{
+  "model": "gemini-2.5-pro",
+  "prompt": "Please polish this prompt. Make it nicer. Mention time & geography in history. Reply ONLY response. MAX 50 characters: Medieval monk",
+  "options": {
+    "temperature": 0.7,
+    "max_tokens": 8192
+  }
+}
+
+ℹ️  🚀 Sending request...
+📥 RESPONSE: STATUS: 200
+📥 RESPONSE: HEADERS: Content-Type=application/json; charset=utf-8, Length=419
+📥 RESPONSE: BODY:
+{
+  "data": {
+    "content": "An English monk illuminates a manuscript, c. 1300.",
+    "generationId": "req_504a65272651c247"
+  },
+  "metadata": {
+    "request": {
+      "timestamp": "2025-07-23T04:36:01.431Z",
+      "attemptNumber": 1,
+      "retryCount": 0
+    },
+    "config": {
+      "temperature": 0.7,
+      "finishReason": "STOP"
+    },
+    "tokens": {
+      "input": 28,
+      "output": 15,
+      "total": 1758,
+      "maxRequested": 8192
+    },
+    "provider": "gemini",
+    "model": "gemini-2.5-pro",
+    "timing": {
+      "responseMs": 20507
+    }
+  },
+  "success": true
+}
+
+✅ ✨ Gemini - Prompt Polishing - PASSED ✨
+ℹ️  📝 CONTENT: 'An English monk illuminates a manuscript, c. 1300.'
+ℹ️  📏 CONTENT LENGTH: 50 characters
+ℹ️  🎯 TOKENS: Input=28, Output=15, Total=1758, MaxRequested=8192
+ℹ️  ⏱️  TIMING: 20507ms
+ℹ️  🤖 PROVIDER: gemini / MODEL: gemini-2.5-pro
+ℹ️  🔧 CONFIG: Temperature=0.7, FinishReason=STOP
+StatusCode                     200
+Success                        True
+Response                       @{data=; metadata=; success=True}
+
+- * 60
+ Gemini - Very Low Tokens (Edge Case)
+- * 60
+📤 REQUEST: URL: http://localhost:4000/api/llm/generate
+📤 REQUEST: METHOD: POST
+📤 REQUEST: BODY:
+{
+  "model": "gemini-2.5-pro",
+  "prompt": "Please polish this prompt. Make it nicer. Mention time & geography in history. Reply ONLY response. MAX 50 characters: Medieval monk",
+  "options": {
+    "temperature": 0.7,
+    "max_tokens": 20
+  }
+}
+
+ℹ️  🚀 Sending request...
