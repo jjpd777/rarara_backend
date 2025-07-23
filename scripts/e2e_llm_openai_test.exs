@@ -9,6 +9,7 @@ defmodule Scripts.E2eLlmTest do
 
     # --- Test Cases ---
     run_tests_for_provider("OpenAI", "gpt-4.1", [50], prompt, base_url)
+    run_tests_for_provider("OpenAI", "gpt-4.1-mini", [50], prompt, base_url)
     run_tests_for_provider("Anthropic", "claude-sonnet-4-20250514", [50], prompt, base_url)
     run_tests_for_provider("Gemini", "gemini-2.5-flash-lite", [50], prompt, base_url)
     run_tests_for_provider("Gemini", "gemini-2.5-flash", [1000], prompt, base_url)

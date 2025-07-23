@@ -15,6 +15,13 @@ defmodule RaBackend.LLM.ModelRegistry do
       model_type: :text_gen
     },
     %{
+      house: "OpenAI",
+      model: "gpt-4.1-mini",
+      display_name: "OpenAI - GPT-4.1 Mini",
+      provider: Providers.OpenAI,
+      model_type: :text_gen
+    },
+    %{
       house: "Anthropic",
       model: "claude-sonnet-4-20250514",
       display_name: "Anthropic - Claude Sonnet 4",
