@@ -3,7 +3,7 @@ defmodule Scripts.E2eLlmTest do
   E2E test for LLM endpoints. Call Scripts.E2eLlmTest.run/0 from IEx.
   """
 
-  def run(base_url \\ "http://localhost:4000") do
+  def run(base_url \\ "http://ra-backend.fly.dev") do
     prompt =
       "Please polish this character creation prompt. Include moment in history. Reply ONLY response. MAX 50 characters: Atheist European philosopher"
 
