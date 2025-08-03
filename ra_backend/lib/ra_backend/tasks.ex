@@ -15,7 +15,7 @@ defmodule RaBackend.Tasks do
   """
   def create_task(attrs \\ %{}) do
     attrs
-    |> Map.put(:user_id, @dev_user_id)
+    |> Map.put("user_id", @dev_user_id)
     |> then(&%Task{} |> Task.changeset(&1) |> Repo.insert())
   end
 
