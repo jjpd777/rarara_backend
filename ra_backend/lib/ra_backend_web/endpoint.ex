@@ -15,6 +15,11 @@ defmodule RaBackendWeb.Endpoint do
     websocket: [connect_info: [session: @session_options]],
     longpoll: [connect_info: [session: @session_options]]
 
+  # WebSocket for real-time task updates
+  socket "/socket", RaBackendWeb.UserSocket,
+    websocket: true,
+    longpoll: false
+
   # Serve at "/" the static files from "priv/static" directory.
   #
   # You should set gzip to true if you are running phx.digest

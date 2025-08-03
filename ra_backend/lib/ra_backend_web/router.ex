@@ -60,6 +60,10 @@ defmodule RaBackendWeb.Router do
     post "/llm/generate", LLMController, :generate
     get "/llm/models", LLMController, :list_models
 
+    # Task routes for real-time background processing
+    post "/tasks", TaskController, :create
+    get "/tasks/:id", TaskController, :show
+
     # Standard resource routes
     resources "/users", GraUserLive.Index, except: [:new, :edit]
     resources "/labels", GraLabelLive.Index, except: [:new, :edit]
