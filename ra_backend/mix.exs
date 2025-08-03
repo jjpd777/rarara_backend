@@ -61,7 +61,8 @@ defmodule RaBackend.MixProject do
       {:bandit, "~> 1.5"},
       {:httpoison, "~> 2.0"},           # HTTP client for API calls
       {:tesla, "~> 1.7"},               # Alternative HTTP client with middleware
-      {:nimble_pool, "~> 1.0"}         # Connection pooling for API calls
+      {:nimble_pool, "~> 1.0"},
+      {:oban, "~> 2.17"}
     ]
   end
 
