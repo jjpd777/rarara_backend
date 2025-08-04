@@ -33,8 +33,8 @@ class LLMService {
     }
     
     private func joinChannel() {
-        // Join a task channel (you can use any task ID)
-        channel = socket.channel("task:swift_llm")
+        // Join an LLM chat channel (use llm_, chat_, or swift_ prefix)
+        channel = socket.channel("task:llm_chat")
         
         channel.join()
             .receive("ok") { _ in

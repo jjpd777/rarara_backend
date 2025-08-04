@@ -19,42 +19,60 @@ defmodule RaBackendWeb.TaskChannel do
     # Subscribe to PubSub topic for this specific task
     Phoenix.PubSub.subscribe(RaBackend.PubSub, "task:#{task_id}")
 
-    # Verify task exists before allowing join
-    try do
-      task = Tasks.get_task!(task_id)
-
-      # Send message to self to push initial status after join completes
-      send(self(), :after_join)
-
-      Logger.debug("Client connected to task #{task_id}, current progress: #{task.progress}")
+    # Check if this is an LLM chat channel (doesn't need a real Task record)
+    if is_llm_channel?(task_id) do
+      Logger.info("Joined LLM chat channel: #{task_id}")
       {:ok, assign(socket, :task_id, task_id)}
+    else
+      # Verify actual task exists before allowing join
+      try do
+        task = Tasks.get_task!(task_id)
 
-    rescue
-      Ecto.NoResultsError ->
-        Logger.warning("Client attempted to join non-existent task: #{task_id}")
-        {:error, %{reason: "Task not found"}}
+        # Send message to self to push initial status after join completes
+        send(self(), :after_join)
+
+        Logger.debug("Client connected to task #{task_id}, current progress: #{task.progress}")
+        {:ok, assign(socket, :task_id, task_id)}
+
+      rescue
+        Ecto.NoResultsError ->
+          Logger.warning("Client attempted to join non-existent task: #{task_id}")
+          {:error, %{reason: "Task not found"}}
+      end
     end
+  end
+
+  # Helper function to identify LLM chat channels
+  defp is_llm_channel?(task_id) do
+    String.starts_with?(task_id, "llm_") or
+    String.starts_with?(task_id, "chat_") or
+    String.starts_with?(task_id, "swift_")
   end
 
   @impl true
   def handle_info(:after_join, socket) do
     task_id = socket.assigns.task_id
 
-    # Now we can safely push the initial status
-    try do
-      task = Tasks.get_task!(task_id)
+    # Only send initial status for real tasks, not LLM chat channels
+    if is_llm_channel?(task_id) do
+      Logger.debug("LLM chat channel #{task_id} ready for messages")
+    else
+      # Now we can safely push the initial status for real tasks
+      try do
+        task = Tasks.get_task!(task_id)
 
-      push(socket, "status", %{
-        task_id: task_id,
-        status: task.status,
-        progress: task.progress,
-        message: "Connected to task #{task_id}",
-        timestamp: DateTime.utc_now()
-      })
+        push(socket, "status", %{
+          task_id: task_id,
+          status: task.status,
+          progress: task.progress,
+          message: "Connected to task #{task_id}",
+          timestamp: DateTime.utc_now()
+        })
 
-    rescue
-      Ecto.NoResultsError ->
-        Logger.warning("Task #{task_id} was deleted after join")
+      rescue
+        Ecto.NoResultsError ->
+          Logger.warning("Task #{task_id} was deleted after join")
+      end
     end
 
     {:noreply, socket}
