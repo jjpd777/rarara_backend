@@ -17,7 +17,28 @@ defmodule RaBackendWeb.TaskChannel do
     # Subscribe to PubSub topic for this specific task
     Phoenix.PubSub.subscribe(RaBackend.PubSub, "task:#{task_id}")
 
-    # Send current task status immediately upon joining
+    # Verify task exists before allowing join
+    try do
+      task = Tasks.get_task!(task_id)
+
+      # Send message to self to push initial status after join completes
+      send(self(), :after_join)
+
+      Logger.debug("Client connected to task #{task_id}, current progress: #{task.progress}")
+      {:ok, assign(socket, :task_id, task_id)}
+
+    rescue
+      Ecto.NoResultsError ->
+        Logger.warning("Client attempted to join non-existent task: #{task_id}")
+        {:error, %{reason: "Task not found"}}
+    end
+  end
+
+  @impl true
+  def handle_info(:after_join, socket) do
+    task_id = socket.assigns.task_id
+
+    # Now we can safely push the initial status
     try do
       task = Tasks.get_task!(task_id)
 
@@ -29,14 +50,12 @@ defmodule RaBackendWeb.TaskChannel do
         timestamp: DateTime.utc_now()
       })
 
-      Logger.debug("Client connected to task #{task_id}, current progress: #{task.progress}")
-      {:ok, assign(socket, :task_id, task_id)}
-
     rescue
       Ecto.NoResultsError ->
-        Logger.warning("Client attempted to join non-existent task: #{task_id}")
-        {:error, %{reason: "Task not found"}}
+        Logger.warning("Task #{task_id} was deleted after join")
     end
+
+    {:noreply, socket}
   end
 
   @impl true
