@@ -1,34 +1,56 @@
-# Swift Integration Example
+# Swift Integration Example (SwiftPhoenix)
 
 ## Setup WebSocket Connection
 
 ```swift
-import SocketIO
+import SwiftPhoenixClient
 
 class LLMService {
-    private var socket: SocketIOClient!
+    private var socket: Socket!
+    private var channel: Channel!
     
     init() {
-        let manager = SocketManager(socketURL: URL(string: "ws://localhost:4000/socket")!)
-        socket = manager.defaultSocket
+        // Connect to your Phoenix WebSocket endpoint
+        socket = Socket("ws://localhost:4000/socket", transport: URLSessionTransport.self)
         
-        setupEventHandlers()
+        setupSocketEventHandlers()
         socket.connect()
     }
     
-    private func setupEventHandlers() {
+    private func setupSocketEventHandlers() {
+        socket.onOpen { [weak self] in
+            print("✅ Connected to Phoenix WebSocket")
+            self?.joinChannel()
+        }
+        
+        socket.onError { error in
+            print("❌ WebSocket error: \(error.localizedDescription)")
+        }
+        
+        socket.onClose { code in
+            print("❌ WebSocket closed with code: \(code)")
+        }
+    }
+    
+    private func joinChannel() {
+        // Join a task channel (you can use any task ID)
+        channel = socket.channel("task:swift_llm")
+        
+        channel.join()
+            .receive("ok") { _ in
+                print("✅ Joined task channel")
+            }
+            .receive("error") { error in
+                print("❌ Failed to join channel: \(error)")
+            }
+        
+        setupChannelEventHandlers()
+    }
+    
+    private func setupChannelEventHandlers() {
         // Handle LLM responses
-        socket.on("llm_response") { [weak self] data, ack in
-            self?.handleLLMResponse(data)
-        }
-        
-        // Handle connection events
-        socket.on(clientEvent: .connect) { data, ack in
-            print("✅ Connected to LLM WebSocket")
-        }
-        
-        socket.on(clientEvent: .disconnect) { data, ack in
-            print("❌ Disconnected from LLM WebSocket")
+        channel.on("llm_response") { [weak self] message in
+            self?.handleLLMResponse(message)
         }
     }
 }
@@ -41,6 +63,11 @@ extension LLMService {
     
     // Simple generation with default model (gemini-2.5-flash-lite)
     func generateText(_ prompt: String, completion: @escaping (Result<String, Error>) -> Void) {
+        guard let channel = channel else {
+            completion(.failure(NSError(domain: "LLMError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Channel not connected"])))
+            return
+        }
+        
         let payload: [String: Any] = [
             "prompt": prompt
             // model defaults to "gemini-2.5-flash-lite" on backend
@@ -49,30 +76,40 @@ extension LLMService {
         // Store completion for this request
         pendingCompletions[prompt] = completion
         
-        // Send WebSocket message
-        socket.emit("llm_generate", payload)
+        // Send message via Phoenix channel
+        channel.push("llm_generate", payload)
     }
     
     // Generation with specific model
     func generateText(_ prompt: String, model: String, completion: @escaping (Result<String, Error>) -> Void) {
+        guard let channel = channel else {
+            completion(.failure(NSError(domain: "LLMError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Channel not connected"])))
+            return
+        }
+        
         let payload: [String: Any] = [
             "prompt": prompt,
             "model": model
         ]
         
         pendingCompletions[prompt] = completion
-        socket.emit("llm_generate", payload)
+        channel.push("llm_generate", payload)
     }
     
     // Generation with options
     func generateText(_ prompt: String, options: [String: Any], completion: @escaping (Result<String, Error>) -> Void) {
+        guard let channel = channel else {
+            completion(.failure(NSError(domain: "LLMError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Channel not connected"])))
+            return
+        }
+        
         let payload: [String: Any] = [
             "prompt": prompt,
             "options": options
         ]
         
         pendingCompletions[prompt] = completion
-        socket.emit("llm_generate", payload)
+        channel.push("llm_generate", payload)
     }
 }
 ```
@@ -83,8 +120,8 @@ extension LLMService {
 extension LLMService {
     private var pendingCompletions: [String: (Result<String, Error>) -> Void] = [:]
     
-    private func handleLLMResponse(_ data: [Any]) {
-        guard let responseData = data.first as? [String: Any] else { return }
+    private func handleLLMResponse(_ message: Message) {
+        guard let responseData = message.payload else { return }
         
         if let success = responseData["success"] as? Bool, success {
             // Success case
@@ -160,19 +197,29 @@ class ChatViewController: UIViewController {
 
 ## Key Benefits
 
-1. **Simple API**: Just `socket.emit("llm_generate", {prompt})` 
+1. **Simple API**: Just `channel.push("llm_generate", {prompt})` 
 2. **Default Model**: Automatically uses `gemini-2.5-flash-lite`
-3. **Real-time**: Instant response via WebSocket push
+3. **Real-time**: Instant response via Phoenix WebSocket
 4. **Error Handling**: Clear success/error responses
 5. **Reuses Infrastructure**: Leverages existing LLM service with retries
 6. **Low Latency**: Direct execution, no queue overhead
+7. **Phoenix Native**: Uses proper Phoenix channels, not Socket.IO
 
-## WebSocket Events
+## Phoenix Channel Events
 
 | Event | Direction | Purpose |
 |-------|-----------|---------|
 | `llm_generate` | Swift → Server | Request text generation |
 | `llm_response` | Server → Swift | Generation result/error |
+
+## SwiftPhoenix Setup
+
+Add to your `Package.swift`:
+```swift
+dependencies: [
+    .package(url: "https://github.com/davidstump/SwiftPhoenixClient.git", from: "5.0.0")
+]
+```
 
 ## Payload Examples
 
