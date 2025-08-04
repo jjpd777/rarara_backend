@@ -1,12 +1,14 @@
 defmodule RaBackendWeb.TaskChannel do
   @moduledoc """
-  Phoenix Channel for real-time task progress updates.
+  Phoenix Channel for real-time task progress updates and LLM generations.
   Leverages PubSub for decoupled communication with background workers.
   """
 
   use RaBackendWeb, :channel
 
   alias RaBackend.Tasks
+  alias RaBackend.LLM.LLMService.Request
+  alias RaBackend.LLM.ProviderRouter
 
   require Logger
 
@@ -70,5 +72,66 @@ defmodule RaBackendWeb.TaskChannel do
   def handle_in("ping", payload, socket) do
     # Simple ping-pong for connection testing
     {:reply, {:ok, payload}, socket}
+  end
+
+  @impl true
+  def handle_in("llm_generate", payload, socket) do
+    Logger.info("LLM generation request received: #{inspect(Map.keys(payload))}")
+
+    # Extract parameters with defaults
+    prompt = Map.get(payload, "prompt")
+    model = Map.get(payload, "model", "gemini-2.5-flash-lite")  # Default to Gemini Flash Lite
+    options = Map.get(payload, "options", %{})
+
+    # Validate required prompt
+    if is_nil(prompt) or prompt == "" do
+      push(socket, "llm_response", %{
+        success: false,
+        error: %{
+          code: "missing_prompt",
+          message: "Prompt is required for LLM generation"
+        }
+      })
+      {:noreply, socket}
+    else
+      # Create LLM request using existing infrastructure
+      request = %Request{
+        prompt: prompt,
+        model: model,
+        options: options
+      }
+
+      Logger.debug("Executing LLM generation: model=#{model}, prompt_length=#{String.length(prompt)}")
+
+      # Execute directly using existing LLM service with retry logic
+      case ProviderRouter.route_request_with_retry(request) do
+        {:ok, response} ->
+          Logger.info("LLM generation successful: id=#{response.generation_id}, model=#{response.model}")
+
+          push(socket, "llm_response", %{
+            success: true,
+            content: response.content,
+            generation_id: response.generation_id,
+            model: response.model,
+            provider: to_string(response.provider),
+            timestamp: DateTime.utc_now()
+          })
+
+        {:error, error} ->
+          Logger.error("LLM generation failed: #{inspect(error)}")
+
+          push(socket, "llm_response", %{
+            success: false,
+            error: %{
+              code: "generation_failed",
+              message: "Failed to generate response",
+              details: inspect(error)
+            },
+            timestamp: DateTime.utc_now()
+          })
+      end
+
+      {:noreply, socket}
+    end
   end
 end
