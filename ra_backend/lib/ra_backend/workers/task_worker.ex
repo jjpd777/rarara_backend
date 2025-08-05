@@ -5,7 +5,7 @@ defmodule RaBackend.Workers.TaskWorker do
   Leverages Elixir's process isolation and functional programming.
   """
 
-  use Oban.Worker, queue: :default, max_attempts: 3
+  use Oban.Worker, max_attempts: 3
 
   alias RaBackend.Tasks
   alias RaBackend.ModelRegistry
@@ -24,10 +24,13 @@ defmodule RaBackend.Workers.TaskWorker do
       # Update status to processing
       {:ok, _task} = Tasks.update_task_progress(task_id, 0.1)
 
-      # Dispatch based on task type
+      # Dispatch based on task type - only allow image/video generation in Oban
       result = case task.task_type do
-        :text_gen -> process_text_generation(task)
         :image_gen -> process_image_generation(task)
+        :video_gen -> process_video_generation(task)
+        other_type ->
+          Logger.error("Task type #{other_type} not allowed in Oban worker")
+          {:error, "Task type #{other_type} disallowed for Oban processing"}
       end
 
       case result do
@@ -131,5 +134,11 @@ defmodule RaBackend.Workers.TaskWorker do
         Logger.error("Provider lookup failed for task #{task.id}: #{inspect(reason)}")
         {:error, reason}
     end
+  end
+
+  # Placeholder for video generation processing
+  defp process_video_generation(task) do
+    Logger.info("Video generation requested for task #{task.id} - not yet implemented")
+    {:error, "Video generation not yet implemented"}
   end
 end

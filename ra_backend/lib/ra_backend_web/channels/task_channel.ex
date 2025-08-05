@@ -252,8 +252,21 @@ defmodule RaBackendWeb.TaskChannel do
 
   # Private helper functions
   defp enqueue_task_job(task_id) do
-    %{task_id: task_id}
-    |> TaskWorker.new()
-    |> Oban.insert()
+    task = Tasks.get_task!(task_id)
+
+    # Only enqueue image and video generation tasks to Oban
+    if task.task_type in [:image_gen, :video_gen] do
+      queue_name = queue_for(task.task_type)
+
+      %{task_id: task_id}
+      |> TaskWorker.new(queue: queue_name)
+      |> Oban.insert()
+    else
+      {:error, "Task type #{task.task_type} not enqueued - only image_gen and video_gen use Oban"}
+    end
   end
+
+  # Map task types to their respective Oban queues
+  defp queue_for(:image_gen), do: :image_generation
+  defp queue_for(:video_gen), do: :video_generation
 end

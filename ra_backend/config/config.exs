@@ -65,7 +65,11 @@ config :phoenix, :json_library, Jason
 config :ra_backend, Oban,
   repo: RaBackend.Repo,
   plugins: [Oban.Plugins.Pruner],
-  queues: [default: 10]
+  queues: [
+    default: 10,
+    image_generation: 5,
+    video_generation: 2
+  ]
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
