@@ -100,6 +100,7 @@ defmodule RaBackendWeb.TaskChannel do
     prompt = Map.get(payload, "prompt")
     model = Map.get(payload, "model", "gemini-2.5-flash-lite")  # Default to Gemini Flash Lite
     options = Map.get(payload, "options", %{})
+    request_id = Map.get(payload, "request_id")
 
     # Validate required prompt
     if is_nil(prompt) or prompt == "" do
@@ -108,7 +109,9 @@ defmodule RaBackendWeb.TaskChannel do
         error: %{
           code: "missing_prompt",
           message: "Prompt is required for LLM generation"
-        }
+        },
+        timestamp: DateTime.utc_now(),
+        request_id: request_id
       })
       {:noreply, socket}
     else
@@ -132,7 +135,8 @@ defmodule RaBackendWeb.TaskChannel do
             generation_id: response.generation_id,
             model: response.model,
             provider: to_string(response.provider),
-            timestamp: DateTime.utc_now()
+            timestamp: DateTime.utc_now(),
+            request_id: request_id
           })
 
         {:error, error} ->
@@ -145,7 +149,8 @@ defmodule RaBackendWeb.TaskChannel do
               message: "Failed to generate response",
               details: inspect(error)
             },
-            timestamp: DateTime.utc_now()
+            timestamp: DateTime.utc_now(),
+            request_id: request_id
           })
       end
 
