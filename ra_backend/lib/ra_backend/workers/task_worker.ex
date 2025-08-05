@@ -86,37 +86,49 @@ defmodule RaBackend.Workers.TaskWorker do
   end
 
   defp process_image_generation(task) do
-    # Update progress
-    Tasks.update_task_progress(task.id, 0.3)
+    # Update progress - worker started
+    Tasks.update_task_progress(task.id, 0.1)
 
     # Find provider for the model
     case ModelRegistry.find_provider_by_model(task.model) do
       {:ok, provider} ->
-        # Update progress
-        Tasks.update_task_progress(task.id, 0.5)
+        Logger.info("Starting image generation for task #{task.id} with model #{task.model}")
 
-        # Generate image
+        # Create progress callback function
+        progress_callback = fn task_id, progress ->
+          Tasks.update_task_progress(task_id, progress)
+          Logger.debug("Updated task #{task_id} progress to #{progress}")
+        end
+
+        # Generate image with real-time polling
         params = %{
           model: task.model,
           input: task.input_data,
-          wait: 60  # Wait up to 60 seconds for Replicate
+          wait: :poll,  # Use polling mode for real-time progress
+          task_id: task.id,
+          progress_callback: progress_callback
         }
 
         case provider.generate_image(params) do
           {:ok, response} ->
-            Tasks.update_task_progress(task.id, 0.9)
+            Logger.info("Image generation completed for task #{task.id}")
             {:ok, %{
               image_url: response["output"],
               prediction_id: response["id"],
               model: task.model,
-              provider: "Replicate"
+              provider: "Replicate",
+              status: response["status"],
+              created_at: response["created_at"],
+              completed_at: response["completed_at"]
             }}
 
           {:error, error} ->
+            Logger.error("Image generation failed for task #{task.id}: #{inspect(error)}")
             {:error, error}
         end
 
       {:error, reason} ->
+        Logger.error("Provider lookup failed for task #{task.id}: #{inspect(reason)}")
         {:error, reason}
     end
   end

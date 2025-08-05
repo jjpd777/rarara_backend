@@ -2,25 +2,36 @@ defmodule RaBackend.ImageGen.Providers.Replicate do
   @moduledoc """
   Provider module for Replicate image generation API.
   Supports any Replicate model by building URLs dynamically.
+  Now supports both synchronous and asynchronous generation with progress polling.
   """
 
   require Logger
 
   @replicate_api "https://api.replicate.com/v1/models"
+  @replicate_predictions_api "https://api.replicate.com/v1/predictions"
   @default_wait 60  # seconds (max Replicate allows)
+  @poll_interval 2000  # Poll every 2 seconds for progress
 
   @type image_req :: %{
           model: String.t(),               # "google/imagen-4-fast"
           input: map(),                    # model-specific input
-          wait: pos_integer() | :no_wait   # optional
+          wait: pos_integer() | :no_wait | :poll   # optional
         }
 
   @spec generate_image(image_req()) :: {:ok, map()} | {:error, term()}
   def generate_image(%{model: model, input: input} = params) do
     Logger.info("Starting Replicate image generation with model: #{model}")
 
+    case Map.get(params, :wait, @default_wait) do
+      :poll -> generate_image_with_polling(model, input, params)
+      wait_mode -> generate_image_sync(model, input, wait_mode)
+    end
+  end
+
+  # Synchronous generation (current behavior)
+  defp generate_image_sync(model, input, wait_mode) do
     wait_header =
-      case Map.get(params, :wait, @default_wait) do
+      case wait_mode do
         :no_wait -> nil
         n when is_integer(n) and n > 0 -> {"Prefer", "wait=#{n}"}
         _ -> {"Prefer", "wait"}               # full blocking
@@ -63,6 +74,114 @@ defmodule RaBackend.ImageGen.Providers.Replicate do
     error ->
       Logger.error("Unexpected error in generate_image: #{inspect(error)}")
       {:error, %{reason: "Unexpected error", details: inspect(error)}}
+  end
+
+  # Asynchronous generation with progress polling
+  defp generate_image_with_polling(model, input, params) do
+    task_id = Map.get(params, :task_id)
+    progress_callback = Map.get(params, :progress_callback)
+
+    Logger.info("Starting async Replicate generation with polling for model: #{model}")
+
+    # Step 1: Create prediction (no wait)
+    headers = [
+      {"Authorization", "Bearer #{api_key!()}"},
+      {"Content-Type", "application/json"}
+    ]
+
+    url = "#{@replicate_api}/#{model}/predictions"
+    body = Jason.encode!(%{input: input})
+
+    case HTTPoison.post(url, body, headers) do
+      {:ok, %HTTPoison.Response{status_code: 201, body: raw_body}} ->
+        case Jason.decode(raw_body) do
+          {:ok, prediction} ->
+            prediction_id = prediction["id"]
+            Logger.info("Created prediction #{prediction_id}, starting polling...")
+
+            # Step 2: Poll for progress
+            poll_for_completion(prediction_id, task_id, progress_callback)
+
+          {:error, error} ->
+            {:error, %{reason: "JSON decode error", details: inspect(error)}}
+        end
+
+      {:ok, %HTTPoison.Response{status_code: code, body: raw_body}} ->
+        Logger.error("Replicate API error: status=#{code}, body=#{raw_body}")
+        {:error, %{status: code, body: raw_body, message: "Replicate API error"}}
+
+      {:error, error} ->
+        Logger.error("Failed to create prediction: #{inspect(error)}")
+        {:error, error}
+    end
+  end
+
+  # Poll Replicate for prediction status and progress
+  defp poll_for_completion(prediction_id, task_id, progress_callback, attempt \\ 1) do
+    Logger.debug("Polling prediction #{prediction_id}, attempt #{attempt}")
+
+    headers = [{"Authorization", "Bearer #{api_key!()}"}]
+    url = "#{@replicate_predictions_api}/#{prediction_id}"
+
+    case HTTPoison.get(url, headers) do
+      {:ok, %HTTPoison.Response{status_code: 200, body: raw_body}} ->
+        case Jason.decode(raw_body) do
+          {:ok, prediction} ->
+            status = prediction["status"]
+            Logger.debug("Prediction #{prediction_id} status: #{status}")
+
+            # Update progress based on status
+            progress = case status do
+              "starting" -> 0.2
+              "processing" -> 0.6
+              "succeeded" -> 1.0
+              "failed" -> 0.0
+              "canceled" -> 0.0
+              _ -> 0.1
+            end
+
+            # Call progress callback if provided
+            if progress_callback && task_id do
+              progress_callback.(task_id, progress)
+            end
+
+            case status do
+              "succeeded" ->
+                Logger.info("Image generation completed for prediction #{prediction_id}")
+                {:ok, prediction}
+
+              "failed" ->
+                error = prediction["error"] || "Image generation failed"
+                Logger.error("Image generation failed for prediction #{prediction_id}: #{error}")
+                {:error, %{status: "failed", error: error}}
+
+              "canceled" ->
+                Logger.error("Image generation canceled for prediction #{prediction_id}")
+                {:error, %{status: "canceled"}}
+
+              status when status in ["starting", "processing"] ->
+                # Continue polling
+                Process.sleep(@poll_interval)
+                poll_for_completion(prediction_id, task_id, progress_callback, attempt + 1)
+
+              _ ->
+                Logger.warning("Unknown status #{status} for prediction #{prediction_id}")
+                Process.sleep(@poll_interval)
+                poll_for_completion(prediction_id, task_id, progress_callback, attempt + 1)
+            end
+
+          {:error, error} ->
+            {:error, %{reason: "JSON decode error", details: inspect(error)}}
+        end
+
+      {:ok, %HTTPoison.Response{status_code: code, body: raw_body}} ->
+        Logger.error("Error polling prediction #{prediction_id}: HTTP #{code}, #{raw_body}")
+        {:error, %{status: code, body: raw_body}}
+
+      {:error, error} ->
+        Logger.error("HTTP error polling prediction #{prediction_id}: #{inspect(error)}")
+        {:error, error}
+    end
   end
 
   # Helpers ------------------------------------------------------------

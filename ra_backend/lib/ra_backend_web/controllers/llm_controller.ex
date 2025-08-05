@@ -16,19 +16,19 @@ defmodule RaBackendWeb.LLMController do
     with {:ok, request} <- build_request(params),
          {:ok, response} <- ProviderRouter.route_request_with_retry(request) do
 
-      json(conn, %{
-        success: true,
-        data: %{
+    json(conn, %{
+      success: true,
+      data: %{
           content: response.content,
           model: response.model,
           provider: response.provider,
           generation_id: response.generation_id
-        }
-      })
+      }
+    })
     else
       {:error, :validation_error, message} ->
-        conn
-        |> put_status(:bad_request)
+    conn
+    |> put_status(:bad_request)
         |> json(%{
           success: false,
           error: %{
@@ -43,11 +43,11 @@ defmodule RaBackendWeb.LLMController do
         conn
         |> put_status(:internal_server_error)
         |> json(%{
-          success: false,
-          error: %{
+      success: false,
+      error: %{
             code: "generation_failed",
             message: "Failed to generate response"
-          }
+      }
         })
     end
   end
