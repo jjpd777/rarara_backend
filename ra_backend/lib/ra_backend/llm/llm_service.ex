@@ -19,5 +19,5 @@ defmodule RaBackend.LLM.LLMService do
   @type llm_request :: %Request{}
   @type llm_response :: %Response{}
 
-  @callback generate(llm_request()) :: {:ok, llm_response()} | {:error, term()}
+  @callback generate_text(llm_request()) :: {:ok, llm_response()} | {:error, term()}
 end

@@ -9,6 +9,7 @@ defmodule RaBackendWeb.TaskChannel do
   alias RaBackend.Tasks
   alias RaBackend.LLM.LLMService.Request
   alias RaBackend.LLM.ProviderRouter
+  alias RaBackend.Workers.TaskWorker
 
   require Logger
 
@@ -94,8 +95,6 @@ defmodule RaBackendWeb.TaskChannel do
 
   @impl true
   def handle_in("llm_generate", payload, socket) do
-    Logger.info("LLM generation request received: #{inspect(Map.keys(payload))}")
-
     # Extract parameters with defaults
     prompt = Map.get(payload, "prompt")
     model = Map.get(payload, "model", "gemini-2.5-flash-lite")  # Default to Gemini Flash Lite
@@ -156,5 +155,105 @@ defmodule RaBackendWeb.TaskChannel do
 
       {:noreply, socket}
     end
+  end
+
+  @impl true
+  def handle_in("image_generate", payload, socket) do
+    # Extract parameters
+    prompt = Map.get(payload, "prompt")
+    model = Map.get(payload, "model", "google/imagen-4-fast")  # Default Replicate model
+    request_id = Map.get(payload, "request_id")
+
+    # Build input data for the specific model
+    input_data = case model do
+      "google/imagen-4-fast" ->
+        %{
+          "prompt" => prompt,
+          "aspect_ratio" => Map.get(payload, "aspect_ratio", "4:3")
+        }
+      "bytedance/seedream-3" ->
+        %{
+          "prompt" => prompt
+        }
+      _ ->
+        # Generic input - just pass through all non-system fields
+        payload
+        |> Map.drop(["model", "request_id"])
+        |> Map.put("prompt", prompt)
+    end
+
+    # Validate required prompt
+    if is_nil(prompt) or prompt == "" do
+      push(socket, "image_response", %{
+        success: false,
+        error: %{
+          code: "missing_prompt",
+          message: "Prompt is required for image generation"
+        },
+        timestamp: DateTime.utc_now(),
+        request_id: request_id
+      })
+      {:noreply, socket}
+    else
+      # Create task and enqueue for background processing
+      case Tasks.create_task(%{
+        task_type: :image_gen,
+        model: model,
+        input_data: input_data
+      }) do
+        {:ok, task} ->
+          # Enqueue Oban job
+          case enqueue_task_job(task.id) do
+            {:ok, _job} ->
+              Logger.info("Image generation task created: #{task.id} with model: #{model}")
+
+              push(socket, "image_response", %{
+                success: true,
+                task_id: task.id,
+                message: "Image generation started",
+                model: model,
+                timestamp: DateTime.utc_now(),
+                request_id: request_id
+              })
+
+            {:error, error} ->
+              Logger.error("Failed to enqueue image generation job: #{inspect(error)}")
+
+              push(socket, "image_response", %{
+                success: false,
+                error: %{
+                  code: "enqueue_failed",
+                  message: "Failed to start image generation",
+                  details: inspect(error)
+                },
+                timestamp: DateTime.utc_now(),
+                request_id: request_id
+              })
+          end
+
+        {:error, changeset} ->
+          Logger.error("Failed to create image generation task: #{inspect(changeset.errors)}")
+
+          push(socket, "image_response", %{
+            success: false,
+            error: %{
+              code: "task_creation_failed",
+              message: "Failed to create image generation task",
+              details: inspect(changeset.errors)
+            },
+            timestamp: DateTime.utc_now(),
+            request_id: request_id
+          })
+      end
+
+      {:noreply, socket}
+    end
+  end
+
+  # Private helper functions
+  defp enqueue_task_job(task_id) do
+    %{task_id: task_id}
+    |> TaskWorker.new()
+    |> Oban.insert()
   end
 end

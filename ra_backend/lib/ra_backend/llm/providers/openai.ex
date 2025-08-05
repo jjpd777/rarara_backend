@@ -7,7 +7,7 @@ defmodule RaBackend.LLM.Providers.OpenAI do
   alias RaBackend.LLM.ProviderHelper
 
   @impl true
-  def generate(%Request{prompt: prompt, model: model, options: options, generation_id: generation_id, start_time: start_time}) do
+  def generate_text(%Request{prompt: prompt, model: model, options: options, generation_id: generation_id, start_time: start_time}) do
     config = ProviderHelper.get_config(:openai)
 
     # Validate configuration

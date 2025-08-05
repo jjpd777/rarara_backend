@@ -91,16 +91,13 @@ config :phoenix, :stacktrace_depth, 20
 # Initialize plugs at runtime for faster development compilation
 config :phoenix, :plug_init_mode, :runtime
 
-config :phoenix_live_view,
-  # Include HEEx debug annotations as HTML comments in rendered markup
-  debug_heex_annotations: true,
-  # Enable helpful, but potentially expensive runtime checks
-  enable_expensive_runtime_checks: true
+# Include HEEx debug annotations as HTML comments in rendered markup
+config :phoenix_live_view, :debug_heex_annotations, true
 
 # Disable swoosh api client as it is only required for production adapters.
 config :swoosh, :api_client, false
 
-# Configure LLM providers for development
+# LLM provider configurations for development
 config :ra_backend, :llm_providers,
   openai: [
     api_key: System.get_env("OPENAI_API_KEY") || "dummy_key_for_dev",
@@ -113,4 +110,8 @@ config :ra_backend, :llm_providers,
   gemini: [
     api_key: System.get_env("GEMINI_API_KEY") || "dummy_key_for_dev",
     base_url: System.get_env("GEMINI_BASE_URL") || "https://generativelanguage.googleapis.com/v1beta"
+  ],
+  replicate: [
+    api_key: System.get_env("REPLICATE_API_KEY") || "dummy_key_for_dev",
+    base_url: System.get_env("REPLICATE_BASE_URL") || "https://api.replicate.com/v1"
   ]
