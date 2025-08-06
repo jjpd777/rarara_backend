@@ -116,7 +116,14 @@ defmodule RaBackendWeb.TaskController do
       _ -> "text_gen"  # Default fallback
     end
 
-    Map.put(params, "task_type", task_type)
+    task_params = Map.put(params, "task_type", task_type)
+
+    # Add default model for image/video generation
+    case task_type do
+      "image_gen" -> Map.put(task_params, "model", "google/imagen-4-fast")
+      "video_gen" -> Map.put(task_params, "model", "bytedance/seedance-1-pro")
+      _ -> task_params
+    end
   end
 
   defp enqueue_task_job(task_id) do
