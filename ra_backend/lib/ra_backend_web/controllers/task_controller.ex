@@ -17,8 +17,11 @@ defmodule RaBackendWeb.TaskController do
   def create(conn, params) do
     Logger.info("Creating new task with params: #{inspect(params)}")
 
+    # Determine task_type from input_data
+    task_params = determine_task_params(params)
+
     # Leverage Elixir's with statement for elegant error handling
-    with {:ok, task} <- Tasks.create_task(params),
+    with {:ok, task} <- Tasks.create_task(task_params),
          {:ok, _job} <- enqueue_task_job(task.id) do
 
       Logger.info("Task created successfully: #{task.id}")
@@ -104,6 +107,17 @@ defmodule RaBackendWeb.TaskController do
   end
 
   # Private helper functions
+
+  defp determine_task_params(params) do
+    task_type = case get_in(params, ["input_data", "type"]) do
+      "image" -> "image_gen"
+      "video" -> "video_gen"
+      "text" -> "text_gen"
+      _ -> "text_gen"  # Default fallback
+    end
+
+    Map.put(params, "task_type", task_type)
+  end
 
   defp enqueue_task_job(task_id) do
     %{task_id: task_id}
