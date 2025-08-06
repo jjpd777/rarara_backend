@@ -197,9 +197,9 @@ defmodule RaBackendWeb.TaskChannel do
     else
       # Create task and enqueue for background processing
       case Tasks.create_task(%{
-        task_type: :image_gen,
-        model: model,
-        input_data: input_data
+        "task_type" => "image_gen",
+        "model" => model,
+        "input_data" => input_data
       }) do
         {:ok, task} ->
           # Enqueue Oban job
@@ -278,9 +278,9 @@ defmodule RaBackendWeb.TaskChannel do
     else
       # Create task and enqueue for background processing
       case Tasks.create_task(%{
-        task_type: :video_gen,
-        model: model,
-        input_data: input_data
+        "task_type" => "video_gen",
+        "model" => model,
+        "input_data" => input_data
       }) do
         {:ok, task} ->
           # Enqueue Oban job
