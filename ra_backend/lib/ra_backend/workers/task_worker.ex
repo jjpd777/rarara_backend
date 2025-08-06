@@ -112,7 +112,7 @@ defmodule RaBackend.Workers.TaskWorker do
           progress_callback: progress_callback
         }
 
-        case provider.generate_image(params) do
+        case provider.generate_media(params) do
           {:ok, response} ->
             Logger.info("Image generation completed for task #{task.id}")
             {:ok, %{
@@ -136,9 +136,51 @@ defmodule RaBackend.Workers.TaskWorker do
     end
   end
 
-  # Placeholder for video generation processing
   defp process_video_generation(task) do
-    Logger.info("Video generation requested for task #{task.id} - not yet implemented")
-    {:error, "Video generation not yet implemented"}
+    # Update progress - worker started
+    Tasks.update_task_progress(task.id, 0.1)
+
+    # Find provider for the model
+    case ModelRegistry.find_provider_by_model(task.model) do
+      {:ok, provider} ->
+        Logger.info("Starting video generation for task #{task.id} with model #{task.model}")
+
+        # Create progress callback function
+        progress_callback = fn task_id, progress ->
+          Tasks.update_task_progress(task_id, progress)
+          Logger.debug("Updated task #{task_id} progress to #{progress}")
+        end
+
+        # Generate video with real-time polling
+        params = %{
+          model: task.model,
+          input: task.input_data,
+          wait: :poll,  # Use polling mode for real-time progress
+          task_id: task.id,
+          progress_callback: progress_callback
+        }
+
+        case provider.generate_media(params) do
+          {:ok, response} ->
+            Logger.info("Video generation completed for task #{task.id}")
+            {:ok, %{
+              video_url: response["output"],
+              prediction_id: response["id"],
+              model: task.model,
+              provider: "Replicate",
+              status: response["status"],
+              created_at: response["created_at"],
+              completed_at: response["completed_at"]
+            }}
+
+          {:error, error} ->
+            Logger.error("Video generation failed for task #{task.id}: #{inspect(error)}")
+            {:error, error}
+        end
+
+      {:error, reason} ->
+        Logger.error("Provider lookup failed for task #{task.id}: #{inspect(reason)}")
+        {:error, reason}
+    end
   end
 end

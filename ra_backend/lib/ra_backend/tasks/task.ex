@@ -10,7 +10,7 @@ defmodule RaBackend.Tasks.Task do
     field :status, Ecto.Enum, values: [:queued, :processing, :completed, :failed], default: :queued
     field :progress, :float, default: 0.0
     field :input_data, :map, default: %{}
-    field :task_type, Ecto.Enum, values: [:text_gen, :image_gen], default: :text_gen
+    field :task_type, Ecto.Enum, values: [:text_gen, :image_gen, :video_gen], default: :text_gen
     field :model, :string
     field :result_data, :map, default: %{}
 
@@ -23,7 +23,7 @@ defmodule RaBackend.Tasks.Task do
     |> cast(attrs, [:user_id, :status, :progress, :input_data, :task_type, :model, :result_data])
     |> validate_required([:user_id, :status, :task_type])
     |> validate_inclusion(:status, [:queued, :processing, :completed, :failed])
-    |> validate_inclusion(:task_type, [:text_gen, :image_gen])
+    |> validate_inclusion(:task_type, [:text_gen, :image_gen, :video_gen])
     |> validate_number(:progress, greater_than_or_equal_to: 0.0, less_than_or_equal_to: 1.0)
   end
 end

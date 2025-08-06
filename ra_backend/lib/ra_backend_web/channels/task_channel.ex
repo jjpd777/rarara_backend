@@ -250,6 +250,87 @@ defmodule RaBackendWeb.TaskChannel do
     end
   end
 
+  @impl true
+  def handle_in("video_generate", payload, socket) do
+    # Extract parameters
+    prompt = Map.get(payload, "prompt")
+    model = Map.get(payload, "model", "bytedance/seedance-1-pro")  # Default video model
+    request_id = Map.get(payload, "request_id")
+
+    # Build input data for video model - using minimum duration (5 seconds)
+    input_data = %{
+      "prompt" => prompt,
+      "duration" => 5  # Minimum allowed duration for Seedance (5 or 10)
+    }
+
+    # Validate required prompt
+    if is_nil(prompt) or prompt == "" do
+      push(socket, "video_response", %{
+        success: false,
+        error: %{
+          code: "missing_prompt",
+          message: "Prompt is required for video generation"
+        },
+        timestamp: DateTime.utc_now(),
+        request_id: request_id
+      })
+      {:noreply, socket}
+    else
+      # Create task and enqueue for background processing
+      case Tasks.create_task(%{
+        task_type: :video_gen,
+        model: model,
+        input_data: input_data
+      }) do
+        {:ok, task} ->
+          # Enqueue Oban job
+          case enqueue_task_job(task.id) do
+            {:ok, _job} ->
+              Logger.info("Video generation task created: #{task.id} with model: #{model}")
+
+              push(socket, "video_response", %{
+                success: true,
+                task_id: task.id,
+                message: "Video generation started (5 seconds)",
+                model: model,
+                timestamp: DateTime.utc_now(),
+                request_id: request_id
+              })
+
+            {:error, error} ->
+              Logger.error("Failed to enqueue video generation job: #{inspect(error)}")
+
+              push(socket, "video_response", %{
+                success: false,
+                error: %{
+                  code: "enqueue_failed",
+                  message: "Failed to start video generation",
+                  details: inspect(error)
+                },
+                timestamp: DateTime.utc_now(),
+                request_id: request_id
+              })
+          end
+
+        {:error, changeset} ->
+          Logger.error("Failed to create video generation task: #{inspect(changeset.errors)}")
+
+          push(socket, "video_response", %{
+            success: false,
+            error: %{
+              code: "task_creation_failed",
+              message: "Failed to create video generation task",
+              details: inspect(changeset.errors)
+            },
+            timestamp: DateTime.utc_now(),
+            request_id: request_id
+          })
+      end
+
+      {:noreply, socket}
+    end
+  end
+
   # Private helper functions
   defp enqueue_task_job(task_id) do
     task = Tasks.get_task!(task_id)

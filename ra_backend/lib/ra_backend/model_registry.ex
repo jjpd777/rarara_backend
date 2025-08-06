@@ -40,6 +40,14 @@ defmodule RaBackend.ModelRegistry do
       display_name: "Replicate - Seedream 3",
       provider: RaBackend.ImageGen.Providers.Replicate,
       model_type: :image_gen
+    },
+    # Video models
+    %{
+      house: "Replicate",
+      model: "bytedance/seedance-1-pro",
+      display_name: "Replicate - Seedance 1 Pro",
+      provider: RaBackend.ImageGen.Providers.Replicate,
+      model_type: :video_gen
     }
     # Add more models as needed
   ]

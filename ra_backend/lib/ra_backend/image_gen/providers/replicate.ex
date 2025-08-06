@@ -12,24 +12,27 @@ defmodule RaBackend.ImageGen.Providers.Replicate do
   @default_wait 60  # seconds (max Replicate allows)
   @poll_interval 2000  # Poll every 2 seconds for progress
 
-  @type image_req :: %{
-          model: String.t(),               # "google/imagen-4-fast"
+  @type media_req :: %{
+          model: String.t(),               # "google/imagen-4-fast" or "bytedance/seedance-1-pro"
           input: map(),                    # model-specific input
           wait: pos_integer() | :no_wait | :poll   # optional
         }
 
-  @spec generate_image(image_req()) :: {:ok, map()} | {:error, term()}
-  def generate_image(%{model: model, input: input} = params) do
-    Logger.info("Starting Replicate image generation with model: #{model}")
+  @spec generate_media(media_req()) :: {:ok, map()} | {:error, term()}
+  def generate_media(%{model: model, input: input} = params) do
+    Logger.info("Starting Replicate media generation with model: #{model}")
 
     case Map.get(params, :wait, @default_wait) do
-      :poll -> generate_image_with_polling(model, input, params)
-      wait_mode -> generate_image_sync(model, input, wait_mode)
+      :poll -> generate_media_with_polling(model, input, params)
+      wait_mode -> generate_media_sync(model, input, wait_mode)
     end
   end
 
+  # Backward compatibility alias
+  def generate_image(params), do: generate_media(params)
+
   # Synchronous generation (current behavior)
-  defp generate_image_sync(model, input, wait_mode) do
+  defp generate_media_sync(model, input, wait_mode) do
     wait_header =
       case wait_mode do
         :no_wait -> nil
@@ -77,7 +80,7 @@ defmodule RaBackend.ImageGen.Providers.Replicate do
   end
 
   # Asynchronous generation with progress polling
-  defp generate_image_with_polling(model, input, params) do
+  defp generate_media_with_polling(model, input, params) do
     task_id = Map.get(params, :task_id)
     progress_callback = Map.get(params, :progress_callback)
 
