@@ -86,7 +86,8 @@ defmodule RaBackendWeb.TaskController do
           progress: task.progress,
           input_data: task.input_data,
           created_at: task.inserted_at,
-          updated_at: task.updated_at
+          updated_at: task.updated_at,
+          result_data: task.result_data
         }
       })
 

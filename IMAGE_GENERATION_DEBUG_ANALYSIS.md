@@ -1,175 +1,19 @@
-# Image Generation Debug Analysis
-
-## Overview
-This document analyzes a dual-path image generation workflow issue discovered through server logs and Swift client logs. The problem involved the API endpoint missing default model assignment, causing task failures.
+# Image Generation Flow (with Result Data)
 
 ## System Architecture
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Swift Client  │    │  Phoenix Server │    │  Replicate API  │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
+┌─────────────────┐    ┌────────────────────┐    ┌─────────────────┐
+│   Swift Client  │    │   Phoenix Server   │    │  Replicate API  │
+└─────────────────┘    └────────────────────┘    └─────────────────┘
 ```
 
-## The Problem: Dual-Path Workflow
+---
 
-### Path 1: API Endpoint (BROKEN)
-```
-Swift Client                    Phoenix Server                 Database
-     │                               │                          │
-     │ POST /api/tasks               │                          │
-     │ {"input_data":                │                          │
-     │  {"type":"image",             │                          │
-     │   "prompt":"Medieval monk"}}  │                          │
-     ├──────────────────────────────►│                          │
-     │                               │ determine_task_params()  │
-     │                               │ task_type = "image_gen"  │
-     │                               │ ❌ NO MODEL ASSIGNED     │
-     │                               │                          │
-     │                               │ Tasks.create_task()      │
-     │                               ├─────────────────────────►│
-     │                               │                          │ INSERT task
-     │                               │                          │ model: NULL ❌
-     │                               │◄─────────────────────────┤
-     │ 202 Accepted                  │                          │
-     │ task_id: 508b9881...          │                          │
-     │◄──────────────────────────────┤                          │
-     │                               │                          │
-     │                               │ TaskWorker.perform()     │
-     │                               │ ModelRegistry.find...    │
-     │                               │ ❌ :unsupported_model    │
-     │                               │    (model is nil)        │
-```
+## End-to-End Flow
 
-### Path 2: WebSocket Channel (WORKING)
-```
-Swift Client                    Phoenix Server                 Database
-     │                               │                          │
-     │ WebSocket: task:508b9881...   │                          │
-     ├──────────────────────────────►│ TaskChannel.join()       │
-     │                               │                          │
-     │ "image_generate" event        │                          │
-     │ {"prompt": "Medieval monk",   │                          │
-     │  "model": "google/imagen..."}│                          │
-     ├──────────────────────────────►│                          │
-     │                               │ handle_in("image_gen")   │
-     │                               │ model = "google/imagen-  │
-     │                               │         4-fast" ✅       │
-     │                               │                          │
-     │                               │ Tasks.create_task()      │
-     │                               ├─────────────────────────►│
-     │                               │                          │ INSERT new task
-     │                               │                          │ model: "google..." ✅
-     │                               │◄─────────────────────────┤
-     │                               │                          │
-     │                               │ TaskWorker.perform()     │
-     │                               │ ✅ SUCCESS               │
-```
+### 1. Task Creation (API)
 
-## Log Analysis
-
-### Server Logs Timeline
-
-```
-Timeline: Elixir Server Perspective
-
-[T+0s]   POST /api/tasks - Creates task 508b9881... (NO MODEL)
-         ├─ INSERT INTO tasks (...model=NULL...)
-         └─ Returns 202 Accepted
-
-[T+0.1s] TaskWorker starts for 508b9881...
-         ├─ ModelRegistry.find_provider_by_model(nil)
-         └─ ❌ ERROR: :unsupported_model
-
-[T+1s]   Client connects to WebSocket task:508b9881...
-         └─ TaskChannel.join() ✅
-
-[T+1.1s] WebSocket "image_generate" event received
-         ├─ Creates NEW task 10628cdb... (WITH MODEL)
-         ├─ INSERT INTO tasks (...model="google/imagen-4-fast"...)
-         └─ Returns success response
-
-[T+1.2s] TaskWorker starts for 10628cdb...
-         ├─ Replicate API call
-         ├─ Polling for progress (60% → 100%)
-         └─ ✅ SUCCESS: Image generated
-
-[T+20s]  Original failed task 508b9881... retries
-         └─ ❌ Still fails (model still NULL)
-```
-
-### Swift Client Logs Timeline
-
-```
-Timeline: Swift Client Perspective
-
-📤 POST /api/tasks → {"input_data":{"type":"image","prompt":"Beautiful Christian Park"}}
-📥 202 Response → task_id: "75774c14-9dc8-454c-ad6a-9bf79f6d477e"
-📡 Subscribe to → task:75774c14-9dc8-454c-ad6a-9bf79f6d477e
-
-🎨 Send image_generate event → "Beautiful Christian Park"
-📨 Receive: status → failed (10%) ❌        [Original API task fails]
-📨 Receive: image_response → success ✅     [New WebSocket task created]
-📨 Receive: progress → processing (10%) ✅  [New task progressing]
-📨 Receive: progress → processing (10%) ✅
-📨 Receive: progress → processing (10%) ✅
-
-🗑️ Client cleanup and unsubscribe
-```
-
-## The Confusion
-
-The client receives **mixed signals**:
-1. **Failure** from the original API-created task (missing model)
-2. **Success** from the new WebSocket-created task (with model)
-
-Both tasks share the same channel ID, creating confusion about which task is actually working.
-
-## Root Cause Analysis
-
-### Problem Location
-- **File**: `ra_backend/lib/ra_backend_web/controllers/task_controller.ex`
-- **Function**: `determine_task_params/1`
-- **Issue**: Missing default model assignment for image/video tasks
-
-### Original Broken Code
-```elixir
-defp determine_task_params(params) do
-  task_type = case get_in(params, ["input_data", "type"]) do
-    "image" -> "image_gen"
-    "video" -> "video_gen"
-    "text" -> "text_gen"
-    _ -> "text_gen"
-  end
-
-  Map.put(params, "task_type", task_type)  # ❌ No model assigned
-end
-```
-
-### Fixed Code
-```elixir
-defp determine_task_params(params) do
-  task_type = case get_in(params, ["input_data", "type"]) do
-    "image" -> "image_gen"
-    "video" -> "video_gen"
-    "text" -> "text_gen"
-    _ -> "text_gen"
-  end
-
-  task_params = Map.put(params, "task_type", task_type)
-  
-  # Add default model for image/video generation
-  case task_type do
-    "image_gen" -> Map.put(task_params, "model", "google/imagen-4-fast")
-    "video_gen" -> Map.put(task_params, "model", "bytedance/seedance-1-pro")
-    _ -> task_params
-  end
-end
-```
-
-## Expected Behavior After Fix
-
-### Single-Path Workflow (CLEAN)
 ```
 Swift Client                    Phoenix Server                 Database
      │                               │                          │
@@ -180,76 +24,140 @@ Swift Client                    Phoenix Server                 Database
      ├──────────────────────────────►│                          │
      │                               │ determine_task_params()  │
      │                               │ task_type = "image_gen"  │
-     │                               │ ✅ model = "google/..."  │
+     │                               │ model = "google/imagen-4-fast" (default) │
      │                               │                          │
      │                               │ Tasks.create_task()      │
      │                               ├─────────────────────────►│
      │                               │                          │ INSERT task
-     │                               │                          │ model: "google..." ✅
+     │                               │                          │ model: "google/imagen-4-fast"
      │                               │◄─────────────────────────┤
      │ 202 Accepted                  │                          │
      │ task_id: abc123...            │                          │
      │◄──────────────────────────────┤                          │
-     │                               │                          │
-     │ WebSocket: task:abc123...     │                          │
-     ├──────────────────────────────►│ TaskChannel.join()       │
-     │                               │                          │
-     │                               │ TaskWorker.perform()     │
-     │                               │ ✅ SUCCESS               │
-     │                               │                          │
-     │ Receive: progress updates     │                          │
-     │◄──────────────────────────────┤                          │
-     │ Receive: final success        │                          │
-     │◄──────────────────────────────┤                          │
 ```
 
-## Impact on Swift Development
+---
 
-### Before Fix (Confusing)
-- Client creates task via API → Gets task ID
-- Client connects to WebSocket → Receives failure status
-- Client sends image_generate → Receives success response
-- **Result**: Mixed signals, unclear which task succeeded
+### 2. WebSocket Subscription
 
-### After Fix (Clean)
-- Client creates task via API → Gets task ID with proper model
-- Client connects to WebSocket → Receives progress updates
-- **Result**: Single clear workflow, no confusion
+```
+Swift Client                    Phoenix Server
+     │                               │
+     │ WebSocket: task:abc123...     │
+     ├──────────────────────────────►│ TaskChannel.join()
+     │                               │
+```
 
-## Recommendations for Swift Team
+---
 
-1. **No Swift code changes required** - this is purely a backend fix
-2. **Test the happy path** - API → WebSocket should now work seamlessly
-3. **Remove any dual-path workarounds** if they exist in Swift code
-4. **Expect consistent behavior** from both API endpoint and WebSocket channel
+### 3. Task Processing & Progress Updates
 
-## Model Registry
+```
+Swift Client                    Phoenix Server                 Replicate API
+     │                               │                          │
+     │                               │ TaskWorker.perform()     │
+     │                               │                          │
+     │                               │ 1. Update progress: 0.1  │
+     │◄───────── progress {          │                          │
+     │      "task_id": "...",        │                          │
+     │      "progress": 0.1,         │                          │
+     │      "status": "processing",  │                          │
+     │      "timestamp": ...         │                          │
+     │    }                          │                          │
+     │                               │                          │
+     │                               │ 2. Call Replicate API    │
+     │                               ├─────────────────────────►│
+     │                               │                          │
+     │                               │ 3. Poll for progress     │
+     │◄───────── progress {          │                          │
+     │      "task_id": "...",        │                          │
+     │      "progress": 0.6,         │                          │
+     │      "status": "processing",  │                          │
+     │      "timestamp": ...         │                          │
+     │    }                          │                          │
+```
 
-The system supports these models:
+---
 
-### Image Generation
-- `google/imagen-4-fast` (default)
-- `bytedance/seedream-3`
+### 4. Task Completion (with Result Data)
 
-### Video Generation  
-- `bytedance/seedance-1-pro` (default)
+```
+Swift Client                    Phoenix Server                 Replicate API
+     │                               │                          │
+     │◄───────── progress {          │                          │
+     │      "task_id": "...",        │                          │
+     │      "progress": 1.0,         │                          │
+     │      "status": "completed",   │                          │
+     │      "result_data": {         │                          │
+     │        "image_url": "https://replicate.delivery/...",
+     │        "model": "google/imagen-4-fast",
+     │        "provider": "Replicate",
+     │        "prediction_id": "...",
+     │        "created_at": "...",
+     │        "completed_at": "..."
+     │      },
+     │      "timestamp": ...
+     │    }                          │
+     │                               │                          │
+```
 
-### Text Generation
-- `gpt-4.1`
-- `claude-sonnet-4-20250514` 
-- `gemini-2.5-flash-lite`
+---
 
-## Testing
+### 5. Task Failure (if any)
 
-To verify the fix:
+```
+Swift Client                    Phoenix Server
+     │                               │
+     │◄───────── progress {          │
+     │      "task_id": "...",        │
+     │      "progress": 0.0,         │
+     │      "status": "failed",      │
+     │      "error_data": {          │
+     │        "error": "..."         │
+     │      },                       │
+     │      "timestamp": ...         │
+     │    }                          │
+```
 
-```bash
-# Test API endpoint
-curl -X POST https://your-domain/api/tasks \
-  -H "Content-Type: application/json" \
-  -d '{"input_data":{"type":"image","prompt":"Test image"}}'
+---
 
-# Should return task with model assigned
-# Then connect to WebSocket task:TASK_ID
-# Should receive clean progress updates without failures
-``` 
+## Payload Example: Task Completed
+
+```json
+{
+  "task_id": "abc123...",
+  "progress": 1.0,
+  "status": "completed",
+  "result_data": {
+    "image_url": "https://replicate.delivery/...",
+    "model": "google/imagen-4-fast",
+    "provider": "Replicate",
+    "prediction_id": "xyz789...",
+    "created_at": "2025-01-...",
+    "completed_at": "2025-01-..."
+  },
+  "timestamp": "2025-01-..."
+}
+```
+
+## Payload Example: Task Failed
+
+```json
+{
+  "task_id": "abc123...",
+  "progress": 0.0,
+  "status": "failed",
+  "error_data": {
+    "error": "..."
+  },
+  "timestamp": "2025-01-..."
+}
+```
+
+---
+
+## Swift Client Guidance
+
+- Listen for `"progress"` events on the WebSocket.
+- When `"status": "completed"` and `"result_data"` is present, use the `image_url` and other metadata.
+- When `"status": "failed"` and `"error_data"` is present, display the error. 

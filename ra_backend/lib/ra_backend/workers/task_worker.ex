@@ -35,23 +35,27 @@ defmodule RaBackend.Workers.TaskWorker do
 
       case result do
         {:ok, result_data} ->
-          # Update task with final result
-          Tasks.update_task(%Tasks.Task{} = task, %{
-            status: :completed,
-            progress: 1.0,
-            result_data: result_data
-          })
-          Logger.info("Task #{task_id} completed successfully")
-          :ok
+          # Update task with final result and broadcast completion with result_data
+          case Tasks.update_task_progress(task_id, 1.0, result_data) do
+            {:ok, _task} ->
+              Logger.info("Task #{task_id} completed successfully")
+              :ok
+            {:error, reason} ->
+              Logger.error("Failed to complete task #{task_id}: #{inspect(reason)}")
+              {:error, reason}
+          end
 
         {:error, reason} ->
-          # Update task as failed
-          Tasks.update_task(%Tasks.Task{} = task, %{
-            status: :failed,
-            result_data: %{error: inspect(reason)}
-          })
-          Logger.error("Task #{task_id} failed: #{inspect(reason)}")
-          {:error, reason}
+          # Update task as failed and broadcast failure with error_data
+          error_data = %{error: inspect(reason)}
+          case Tasks.update_task_failed(task_id, error_data) do
+            {:ok, _task} ->
+              Logger.error("Task #{task_id} failed: #{inspect(reason)}")
+              {:error, reason}
+            {:error, error} ->
+              Logger.error("Failed to update failed task #{task_id}: #{inspect(error)}")
+              {:error, error}
+          end
       end
 
     rescue

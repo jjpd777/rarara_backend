@@ -80,8 +80,24 @@ defmodule RaBackendWeb.TaskChannel do
   end
 
   @impl true
+  def handle_info({:progress_update, %{status: :completed, result_data: result_data} = payload}, socket) do
+    # Task completed with result data - provide detailed logging
+    Logger.info("Task completed with result: #{payload.task_id}")
+    push(socket, "progress", payload)
+    {:noreply, socket}
+  end
+
+  @impl true
+  def handle_info({:progress_update, %{status: :failed, error_data: error_data} = payload}, socket) do
+    # Task failed with error data
+    Logger.warning("Task failed: #{payload.task_id}")
+    push(socket, "progress", payload)
+    {:noreply, socket}
+  end
+
+  @impl true
   def handle_info({:progress_update, payload}, socket) do
-    # Leverage pattern matching for clean message handling
+    # Regular progress update (processing status)
     Logger.debug("Broadcasting progress update: #{inspect(payload)}")
     push(socket, "progress", payload)
     {:noreply, socket}

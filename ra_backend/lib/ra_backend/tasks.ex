@@ -38,26 +38,30 @@ defmodule RaBackend.Tasks do
   Leverages Ecto.Multi for atomic database + PubSub operations.
   """
   def update_task_progress(task_id, progress) do
+    update_task_progress(task_id, progress, nil)
+  end
+
+  @doc """
+  Updates task progress with optional result_data and broadcasts to WebSocket subscribers.
+  When result_data is provided and progress indicates completion, includes it in broadcast.
+  """
+  def update_task_progress(task_id, progress, result_data) do
+    status = determine_status(progress)
+
+    # Build changeset attributes conditionally
+    changeset_attrs = %{progress: progress, status: status}
+    changeset_attrs =
+      if result_data,
+        do: Map.put(changeset_attrs, :result_data, result_data),
+        else: changeset_attrs
+
     Multi.new()
     |> Multi.update(:task, fn _ ->
       get_task!(task_id)
-      |> Task.changeset(%{
-        progress: progress,
-        status: determine_status(progress)
-      })
+      |> Task.changeset(changeset_attrs)
     end)
     |> Multi.run(:broadcast, fn _, %{task: task} ->
-      Phoenix.PubSub.broadcast(
-        RaBackend.PubSub,
-        "task:#{task_id}",
-        {:progress_update, %{
-          task_id: task_id,
-          progress: progress,
-          status: task.status,
-          timestamp: DateTime.utc_now()
-        }}
-      )
-      {:ok, task}
+      broadcast_progress_update(task_id, progress, status, result_data)
     end)
     |> Repo.transaction()
     |> case do
@@ -67,7 +71,58 @@ defmodule RaBackend.Tasks do
   end
 
   defp determine_status(progress) when progress >= 1.0, do: :completed
+  defp determine_status(progress) when progress <= 0.0, do: :processing  # Keep as processing for normal 0 progress
   defp determine_status(_), do: :processing
+
+  @doc """
+  Updates a task as failed with error data and broadcasts to WebSocket subscribers.
+  """
+  def update_task_failed(task_id, error_data) do
+    Multi.new()
+    |> Multi.update(:task, fn _ ->
+      get_task!(task_id)
+      |> Task.changeset(%{
+        status: :failed,
+        result_data: error_data
+      })
+    end)
+    |> Multi.run(:broadcast, fn _, %{task: _task} ->
+      broadcast_progress_update(task_id, 0.0, :failed, error_data)
+    end)
+    |> Repo.transaction()
+    |> case do
+      {:ok, %{task: task}} -> {:ok, task}
+      {:error, _failed_operation, failed_value, _changes_so_far} -> {:error, failed_value}
+    end
+  end
+
+  # Private function to handle broadcasting with proper payload construction
+  defp broadcast_progress_update(task_id, progress, status, result_data) do
+    base_payload = %{
+      task_id: task_id,
+      progress: progress,
+      status: status,
+      timestamp: DateTime.utc_now()
+    }
+
+    # Pattern match on completion with result_data for clean payload building
+    payload = case {status, result_data} do
+      {:completed, data} when not is_nil(data) ->
+        Map.put(base_payload, :result_data, data)
+      {:failed, data} when not is_nil(data) ->
+        Map.put(base_payload, :error_data, data)
+      _ ->
+        base_payload
+    end
+
+    Phoenix.PubSub.broadcast(
+      RaBackend.PubSub,
+      "task:#{task_id}",
+      {:progress_update, payload}
+    )
+
+    {:ok, :broadcasted}
+  end
 
   @doc """
   Returns the hardcoded development user ID.
