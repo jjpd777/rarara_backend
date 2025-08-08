@@ -3,7 +3,8 @@
 
 defmodule SimpleVideoTest do
   @moduledoc """
-  Simple test for video generation with step-by-step logging
+  Simple test for video generation with step-by-step logging.
+  This version only enqueues the job and waits for the background worker to process it.
   """
 
   def run do
@@ -18,7 +19,7 @@ defmodule SimpleVideoTest do
     test_single_video_generation()
   end
 
-    defp cleanup_old_tasks do
+  defp cleanup_old_tasks do
     IO.puts("\n🧹 Step 1: Cleaning up old video tasks...")
 
     import Ecto.Query
@@ -53,92 +54,75 @@ defmodule SimpleVideoTest do
         IO.puts("   ✅ Task created successfully")
         IO.puts("   📊 Task ID: #{task.id}")
         IO.puts("   📊 Status: #{task.status}")
-        IO.puts("   📊 Progress: #{task.progress}")
-        IO.puts("   📊 Duration: #{task.input_data["duration"]}")
 
-        enqueue_and_execute(task)
+        enqueue_and_monitor(task)
 
       {:error, changeset} ->
         IO.puts("   ❌ Failed to create task: #{inspect(changeset.errors)}")
     end
   end
 
-  defp enqueue_and_execute(task) do
+  defp enqueue_and_monitor(task) do
     IO.puts("\n🔄 Step 3: Enqueueing Oban job...")
 
     case create_oban_job(task.id) do
       {:ok, oban_job} ->
-        IO.puts("   ✅ Oban job created")
+        IO.puts("   ✅ Oban job enqueued successfully")
         IO.puts("   📊 Job ID: #{oban_job.id}")
         IO.puts("   📊 Queue: #{oban_job.queue}")
 
-        execute_worker(task, oban_job)
+        wait_for_completion(task.id)
 
       {:error, error} ->
         IO.puts("   ❌ Failed to create Oban job: #{inspect(error)}")
     end
   end
 
-  defp execute_worker(task, oban_job) do
-    IO.puts("\n⚡ Step 4: Executing worker...")
-    IO.puts("   Starting execution at #{DateTime.utc_now()}")
-
+  defp wait_for_completion(task_id) do
+    IO.puts("\n⏳ Step 4: Waiting for background worker to complete the task...")
     start_time = System.monotonic_time(:millisecond)
 
-    # Monitor progress in a separate process
-    monitor_pid = spawn(fn -> monitor_progress(task.id) end)
-
-    # Execute the worker
-    result = RaBackend.Workers.TaskWorker.perform(oban_job)
-
-    # Stop monitoring
-    Process.exit(monitor_pid, :normal)
+    # Blocking loop to monitor task progress
+    monitor_loop(task_id, 0.0, 0)
 
     end_time = System.monotonic_time(:millisecond)
     execution_time = end_time - start_time
+    IO.puts("   ⏱️  Total wait time: #{execution_time}ms")
 
-    IO.puts("   Execution completed at #{DateTime.utc_now()}")
-    IO.puts("   ⏱️  Total execution time: #{execution_time}ms")
-
-    check_final_result(task.id, result)
-  end
-
-  defp monitor_progress(task_id) do
-    IO.puts("\n📈 Step 5: Monitoring progress...")
-    monitor_loop(task_id, 0.0, 0)
+    check_final_result(task_id)
   end
 
   defp monitor_loop(task_id, last_progress, count) do
-    if count < 30 do  # Monitor for max 30 iterations
-      try do
-        task = RaBackend.Tasks.get_task!(task_id)
-
-        if task.progress != last_progress do
-          IO.puts("   📊 Progress update: #{task.progress} (status: #{task.status})")
-        end
-
-        if task.status in [:completed, :failed] do
-          IO.puts("   🏁 Task finished with status: #{task.status}")
-        else
-          Process.sleep(1000)  # Check every second
-          monitor_loop(task_id, task.progress, count + 1)
-        end
-      rescue
-        _ ->
-          Process.sleep(1000)
-          monitor_loop(task_id, last_progress, count + 1)
-      end
+    # Wait for a maximum of 60 seconds (60 iterations * 1s sleep)
+    if count >= 60 do
+      IO.puts("   ⏰ Monitoring timeout after 60 seconds. Task may not have completed.")
+      :timeout
     else
-      IO.puts("   ⏰ Monitoring timeout after 30 seconds")
+      task = RaBackend.Tasks.get_task!(task_id)
+
+      if task.progress != last_progress do
+        IO.puts("   📈 Progress update: #{Float.round(task.progress * 100, 2)}% (Status: #{task.status})")
+      end
+
+      case task.status do
+        :completed ->
+          IO.puts("   🏁 Task finished with status: :completed")
+          :ok
+        :failed ->
+          IO.puts("   🏁 Task finished with status: :failed")
+          :ok
+        _ ->
+          Process.sleep(1000) # Check every second
+          monitor_loop(task_id, task.progress, count + 1)
+      end
     end
   end
 
-  defp check_final_result(task_id, worker_result) do
-    IO.puts("\n🎯 Step 6: Final results...")
+  defp check_final_result(task_id) do
+    IO.puts("\n🎯 Step 5: Final results...")
 
     final_task = RaBackend.Tasks.get_task!(task_id)
 
-    IO.puts("   📊 Worker result: #{inspect(worker_result)}")
     IO.puts("   📊 Final task status: #{final_task.status}")
     IO.puts("   📊 Final progress: #{final_task.progress}")
 
