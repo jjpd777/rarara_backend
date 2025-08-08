@@ -49,7 +49,7 @@ defmodule VideoDebug do
 
     task_params = %{
       "task_type" => "video_gen",
-      "model" => "bytedance/seedance-1-pro",
+      "model" => "bytedance/seedance-1-lite",
       "input_data" => %{
         "prompt" => "Simple test prompt",
         "duration" => 5

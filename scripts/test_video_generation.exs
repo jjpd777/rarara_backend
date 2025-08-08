@@ -29,7 +29,7 @@ defmodule VideoGenerationTest do
     # Test creating a video task
     task_params = %{
       "task_type" => "video_gen",
-      "model" => "bytedance/seedance-1-pro",
+      "model" => "bytedance/seedance-1-lite",
       "input_data" => %{
         "prompt" => "Moses splitting the Oceans",
         "duration" => 5
@@ -52,7 +52,7 @@ defmodule VideoGenerationTest do
   defp test_model_registry do
     IO.puts("\n📋 Test 2: Model registry should support Seedance model")
 
-    case RaBackend.ModelRegistry.find_provider_by_model("bytedance/seedance-1-pro") do
+    case RaBackend.ModelRegistry.find_provider_by_model("bytedance/seedance-1-lite") do
       {:ok, provider} ->
         IO.puts("✅ SUCCESS: Found provider for Seedance model")
         IO.puts("📊 Provider: #{inspect(provider)}")
@@ -75,7 +75,7 @@ defmodule VideoGenerationTest do
 
     task_params = %{
       "task_type" => "video_gen",
-      "model" => "bytedance/seedance-1-pro",
+      "model" => "bytedance/seedance-1-lite",
       "input_data" => %{
         "prompt" => "Hyperrealistic tiger with Cherubin wings",
         "duration" => 5
@@ -109,7 +109,7 @@ defmodule VideoGenerationTest do
 
     task_params = %{
       "task_type" => "video_gen",
-      "model" => "bytedance/seedance-1-pro",
+      "model" => "bytedance/seedance-1-lite",
       "input_data" => %{
         "prompt" => "Prometheus stealing the fire",
         "duration" => 5

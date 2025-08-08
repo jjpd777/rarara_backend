@@ -270,7 +270,7 @@ defmodule RaBackendWeb.TaskChannel do
   def handle_in("video_generate", payload, socket) do
     # Extract parameters
     prompt = Map.get(payload, "prompt")
-    model = Map.get(payload, "model", "bytedance/seedance-1-pro")  # Default video model
+    model = Map.get(payload, "model", "bytedance/seedance-1-lite")  # Default video model
     request_id = Map.get(payload, "request_id")
 
     # Build input data for video model - using minimum duration (5 seconds)

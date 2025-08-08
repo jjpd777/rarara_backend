@@ -122,7 +122,7 @@ defmodule RaBackendWeb.TaskController do
     # Add default model for image/video generation
     case task_type do
       "image_gen" -> Map.put(task_params, "model", "google/imagen-4-fast")
-      "video_gen" -> Map.put(task_params, "model", "bytedance/seedance-1-pro")
+      "video_gen" -> Map.put(task_params, "model", "bytedance/seedance-1-lite")
       _ -> task_params
     end
   end

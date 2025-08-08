@@ -41,7 +41,7 @@ defmodule SimpleVideoTest do
 
     task_params = %{
       "task_type" => "video_gen",
-      "model" => "bytedance/seedance-1-pro",
+      "model" => "bytedance/seedance-1-lite",
       "input_data" => %{
         "prompt" => "The mythical Prometheus stealing the fire from the gods",
         "duration" => 5
