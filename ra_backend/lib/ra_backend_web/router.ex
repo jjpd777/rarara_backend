@@ -12,6 +12,7 @@ defmodule RaBackendWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
+    plug RaBackendWeb.Plugs.UserIdPlug
   end
 
   scope "/", RaBackendWeb do

@@ -64,7 +64,14 @@ config :phoenix, :json_library, Jason
 # Configure Oban for background job processing
 config :ra_backend, Oban,
   repo: RaBackend.Repo,
-  plugins: [Oban.Plugins.Pruner],
+  plugins: [
+    Oban.Plugins.Pruner,
+    {Oban.Plugins.Cron,
+     crontab: [
+       # Clean up expired idempotency keys every hour
+       {"0 * * * *", RaBackend.Workers.IdempotencyCleanupWorker}
+     ]}
+  ],
   queues: [
     default: 10,
     image_generation: 5,

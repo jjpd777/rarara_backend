@@ -11,7 +11,7 @@ defmodule RaBackend.Application do
       RaBackendWeb.Telemetry,
       RaBackend.Repo,
       {DNSCluster, query: Application.get_env(:ra_backend, :dns_cluster_query) || :ignore},
-      {Phoenix.PubSub, name: RaBackend.PubSub},
+      {Phoenix.PubSub, name: RaBackend.PubSub, adapter: Phoenix.PubSub.PG2},
       # Start Oban for background job processing
       {Oban, Application.fetch_env!(:ra_backend, Oban)},
       # Start the Finch HTTP client for sending emails

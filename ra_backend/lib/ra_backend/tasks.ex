@@ -11,11 +11,16 @@ defmodule RaBackend.Tasks do
   @dev_user_id "11111111-1111-1111-1111-111111111111"
 
   @doc """
-  Creates a task with hardcoded development user.
+  Creates a task. If no user_id is provided, uses the development user.
   """
   def create_task(attrs \\ %{}) do
-    attrs
-    |> Map.put("user_id", @dev_user_id)
+    attrs_with_user =
+      case Map.get(attrs, "user_id") do
+        nil -> Map.put(attrs, "user_id", @dev_user_id)
+        _ -> attrs
+      end
+
+    attrs_with_user
     |> then(&%Task{} |> Task.changeset(&1) |> Repo.insert())
   end
 
