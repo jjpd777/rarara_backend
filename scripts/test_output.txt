@@ -1,0 +1,136 @@
+🎬 Simple Video Generation Test
+Prompt: 'The mythical Prometheus stealing the fire from the gods'
+============================================================
+
+🧹 Step 1: Cleaning up old video tasks...
+[debug] QUERY OK source="tasks" db=1.8ms queue=2.3ms idle=153.9ms
+DELETE FROM "tasks" AS t0 WHERE ((t0."task_type" = 'video_gen') AND t0."status" IN ('queued','processing')) []
+[90m↳ SimpleVideoTest.cleanup_old_tasks/0, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:27[0m
+   Deleted 0 old tasks and 0 old jobs
+[debug] QUERY OK source="oban_jobs" db=1.5ms queue=2.2ms idle=167.0ms
+DELETE FROM "oban_jobs" AS o0 WHERE ((o0."queue" = 'video_generation') AND o0."state" IN ('available','executing')) []
+[90m↳ SimpleVideoTest.cleanup_old_tasks/0, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:32[0m
+
+📋 Step 2: Creating video generation task...
+   ✅ Task created successfully
+[debug] QUERY OK source="tasks" db=2.7ms queue=2.1ms idle=194.7ms
+INSERT INTO "tasks" ("status","progress","user_id","task_type","result_data","input_data","model","inserted_at","updated_at","id") VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) [:queued, 0.0, "11111111-1111-1111-1111-111111111111", :video_gen, %{}, %{"duration" => 5, "prompt" => "The mythical Prometheus stealing the fire from the gods"}, "bytedance/seedance-1-lite", ~U[2025-08-08 20:09:57Z], ~U[2025-08-08 20:09:57Z], "26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.test_single_video_generation/0, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:52[0m
+   📊 Task ID: 26cf40c9-09ec-4377-8874-34fda5e7eaf9
+   📊 Status: queued
+
+🔄 Step 3: Enqueueing Oban job...
+   ✅ Oban job enqueued successfully
+   📊 Job ID: 130
+   📊 Queue: video_generation
+
+⏳ Step 4: Waiting for background worker to complete the task...
+[debug] QUERY OK source="tasks" db=2.4ms queue=1.9ms idle=228.0ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+[debug] QUERY OK source="tasks" db=4.8ms idle=1095.6ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+   📈 Progress update: 60.0% (Status: processing)
+[debug] QUERY OK source="tasks" db=1.6ms queue=0.1ms idle=1011.2ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+[debug] QUERY OK source="tasks" db=7.0ms queue=0.1ms idle=1391.0ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+[debug] QUERY OK source="tasks" db=4.3ms decode=0.1ms queue=0.3ms idle=1013.0ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+[debug] QUERY OK source="tasks" db=2.8ms idle=1411.7ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+[debug] QUERY OK source="tasks" db=3.3ms queue=0.1ms idle=1245.5ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+[debug] QUERY OK source="tasks" db=5.1ms queue=0.1ms idle=1421.2ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+[debug] QUERY OK source="tasks" db=11.6ms decode=0.1ms queue=0.2ms idle=1218.8ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+[debug] QUERY OK source="tasks" db=9.1ms queue=0.2ms idle=1456.6ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+[debug] QUERY OK source="tasks" db=5.3ms queue=0.1ms idle=1016.3ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+[debug] QUERY OK source="tasks" db=4.7ms idle=1477.3ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+[debug] QUERY OK source="tasks" db=1.9ms queue=0.1ms idle=1007.5ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+[debug] QUERY OK source="tasks" db=7.4ms queue=0.2ms idle=1475.7ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+[debug] QUERY OK source="tasks" db=2.9ms queue=0.2ms idle=1010.0ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+[debug] QUERY OK source="tasks" db=2.3ms decode=0.1ms queue=0.1ms idle=1509.1ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+[debug] QUERY OK source="tasks" db=6.8ms queue=0.2ms idle=1267.2ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+[debug] QUERY OK source="tasks" db=13.0ms queue=0.2ms idle=1540.0ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+[debug] QUERY OK source="tasks" db=2.7ms queue=0.1ms idle=1278.4ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+[debug] QUERY OK source="tasks" db=5.7ms queue=0.1ms idle=1563.2ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+[debug] QUERY OK source="tasks" db=5.0ms queue=0.1ms idle=1020.2ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+[debug] QUERY OK source="tasks" db=1.9ms queue=0.1ms idle=1582.3ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+[debug] QUERY OK source="tasks" db=1.8ms queue=0.1ms idle=1009.5ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+[debug] QUERY OK source="tasks" db=5.1ms queue=0.1ms idle=1579.1ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+[debug] QUERY OK source="tasks" db=1.8ms queue=0.1ms idle=1003.8ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+[debug] QUERY OK source="tasks" db=5.1ms queue=0.1ms idle=1593.0ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+[debug] QUERY OK source="tasks" db=3.1ms queue=0.1ms idle=1284.0ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+[debug] QUERY OK source="tasks" db=1.8ms queue=0.1ms idle=1594.0ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+[debug] QUERY OK source="tasks" db=2.7ms queue=0.1ms idle=1013.6ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+[debug] QUERY OK source="tasks" db=4.1ms queue=0.1ms idle=1615.9ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+[debug] QUERY OK source="tasks" db=4.7ms decode=0.1ms queue=0.1ms idle=1008.4ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+   📈 Progress update: 100.0% (Status: completed)
+[debug] QUERY OK source="tasks" db=3.3ms queue=0.1ms idle=1612.2ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.monitor_loop/3, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:101[0m
+   🏁 Task finished with status: :completed
+   ⏱️  Total wait time: 31511ms
+
+🎯 Step 5: Final results...
+   📊 Final task status: completed
+[debug] QUERY OK source="tasks" db=3.0ms queue=0.1ms idle=1616.4ms
+SELECT t0."id", t0."user_id", t0."status", t0."progress", t0."input_data", t0."task_type", t0."model", t0."result_data", t0."inserted_at", t0."updated_at" FROM "tasks" AS t0 WHERE (t0."id" = $1) ["26cf40c9-09ec-4377-8874-34fda5e7eaf9"]
+[90m↳ SimpleVideoTest.check_final_result/1, at: c:/Users/fibercowboy/Desktop/ElixirElixirElixir/rarara_backend/scripts/simple_video_test.exs:124[0m
+   📊 Final progress: 1.0
+   ✅ SUCCESS: Video generation completed!
+   🎬 Video URL: https://replicate.delivery/xezq/76d2kdbj8UYzE12Zvbw8is9lfywXYy7IafM8kf6R9lssdBSqA/tmpetyf65as.mp4
